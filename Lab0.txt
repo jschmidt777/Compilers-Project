@@ -2,4 +2,12 @@
 //Author: Joseph Schmidt
 //CMPT 432L - Compilers
 //Lab 0 - Build Documentation
+//25 January 2016
 
+Overview: This document will go into detail as to how the code for this project will be deployed, and built.
+
+Building and depolying: This project will be done in JavaScript, which can be ran in any web browser (i.e Chrome, Firefox, Opera). Fortunately, this makes any program written in JavaScript easy to build, since the source code for a project just needs to be cloned from GitHub to target computer, and then ran in a browser. 
+This is done by simply right clicking the file after it has been cloned from GitHub to the local host, and selecting the "open with" option. This will then allow the user to launch the code in whichever browser they desire.
+To deploy the code to GitHub, a repository was created on my machine, and commits are synced through the GitHub GUI (or command line if desired) to my GitHub account. This ensures easy back-up, and committing, which will be done frequently and meaningfully throughout this project. A bonus to using JavaScript is that it needs no special configuration to run, like an IDE or through command line, so once the file(s) is on the local machine, the source code can be ran in an applicable browser such as those mentioned earlier.
+
+Comments: Further, I want this to be an interesting and fun project, though very rewarding at the same time. In order to do this, and to learn the most from the project, I want my compiler to be as fast as possible, do proper error handling, and perform each part of the "front end" correctly. 
