@@ -1,5 +1,4 @@
 JS-Compiler
 =====================
 
-This is the Compielrs class initial project written in JavaScript.
-See http://www.labouseur.com/courses/compilers/ for details.
+Compilers project and labs for CMPT 432L. This is a private repository, and shall stay as such, because just as the one ring was created in secret, so shall the one compiler... one compiler to rule them all.
