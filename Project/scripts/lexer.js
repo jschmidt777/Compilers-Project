@@ -1,13 +1,30 @@
 /* lexer.js  */
 
-// Definitions for kinds of tokens so they can be compared 
-// with the src code, which will then be added to the token stream.
 /*
 	var comment = (Not(Eol))*Eol;
 */   
+    //Globals
+    var currentLineNum = 0;
 	var tokenStream = [];
-	var identifier = /([a-zA-Z]([a-zA-Z]|\d|)*)/;
+    var insideString = false;
+    var currentState = state0.state;
+/*
+    var stateMatrix = [ //  0-9
+                           [1], //0
+                           [acceptToken] //1
 
+
+
+
+
+
+                      ]*/
+    //while, if, print, int, string, boolean, false, true
+   
+    // Definitions for kinds of tokens so they can be compared 
+    // with the src code, which will then be added to the token stream. 
+	var identifier = /([a-z])/; // followed by an assign
+    var digit = /(0-9)/;
 
 
     function lex()
@@ -16,23 +33,32 @@
         var sourceCode = document.getElementById("taSourceCode").value;
         // Trim the leading and trailing spaces.
         sourceCode = trim(sourceCode);
-        // Removes all spaces in the middle; removes line breaks too.
-        
-        //sourceCode = sourceCode.replace(/(\r\n|\n|\r|\s)/gm,"");
+        // Removes line breaks, tabs, and unnecessary spaces.
+        sourceCode = sourceCode.replace(/(\r\n|\n|\r|)/gm,"");
+        sourceCode = sourceCode.replace(/  +/g, ' ');
 
+        //Array to go through the source code character by character.
+        var sourceCodeArray = sourceCode.split("");
+
+        for (i = 0; i < sourceCodeArray.length; i++){
+            var ch = sourceCodeArray[i];
+            var nextChar = sourceCodeArray[i]+1;
+            
+            if(digit.test(ch)){
+                state = state0.nextState2;
+            }
+        }
         /*TODO: Make definitions for each kind of token (possibly with classes?).
         		I can then make some sort of comparison operations within lex.
         */
         
-        var currentLineNum = 0;
 
-        switch (sourceCode){
+
         	//Take the src code that is an id and add it to the tokens stream.
         	
-            case 'identifier':
+        
                     /*temp = identifier.exec(sourceCode);*/
                     // lexeme of kind identifier
-        			alert("I'm here!");
                     if (identifier === sourceCode){
                         var token_id = new createToken();
                         token_id.frag = "";
@@ -45,9 +71,8 @@
                         tokenStream = sourceCode;
                      }
                     }*/
-            break;
             //default: return null;
-        }
+        
 /*          
         if (sourceCode === ('('|')'|';'|',')){
         	tokens = sourceCode;
@@ -58,7 +83,7 @@
         	new identifier 
         }
 */
-        return tokenStream;
+        return sourceCodeArray;
         // should return a stream of tokens
     }
 
@@ -69,7 +94,34 @@
         this.lineNum = -1;
     }
 
+    function createState0() {
+        this.state = 0;
+        this.nextState0 = 1; //id  
+        this.nextState1 = 2; //symbol/op
+        this.nextState2 = 3; //digit
+    }
 
+    function createState(state, nextState) {
+        this.state = state;
+        this.nextState = nextState;
+    }
+
+    function goToNextState(){
+        state = state.nextState;
+    }
+
+    //Initialize states for a link list of each
+
+    var state0 = new createState0();
+    var state1 = new createState(1, 4); //accepts digit
+    var state2 = new createState(2, null); //accepts id
+    var state3 = new createState(3, null); //accepts symbol/op
+    var state4 = new createState(4, null); //accepts keyword
+
+        
+//look at each char in the src code and see what the state needs to be changed to
+//TODO: Find out how to go through char by char and store into a variable for comparison
+        
     function grabToken() {
         var ch = '';
 
