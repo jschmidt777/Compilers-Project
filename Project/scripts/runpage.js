@@ -4,6 +4,7 @@
     var currentToken = "";
     var errorCount = 0;
     var EOF = "$";
+    var buttonClicksCount = 0;
 
     function init() {
         // Clear the message box.
@@ -12,7 +13,12 @@
         tokens = "";
         tokenIndex = 0;
         currentToken = ' ';
-        errorCount = 0;        
+        errorCount = 0;    
+
+        if (buttonClicksCount > 0){       
+           window.location.reload(true); 
+            //putMessage("Cannot compile multiple times yet."); //TODO: Fix this so the user can compile multiple times with a sticky input
+        }    
     }
     
     function btnCompile_click() {        
@@ -24,13 +30,17 @@
         // Grab the tokens from the lexer . . .
         tokens = lex();
         putMessage("Lex returned [" + tokens + "]");
+
+        buttonClicksCount++;
+
+        
         // . . . and parse!
         // TODO: Get parse up and running after lexer is solid.
         
-        parse();
+        //parse();
         
     }
-    
+
     function putMessage(msg) {
         document.getElementById("taOutput").value += msg + "\n";
     }
