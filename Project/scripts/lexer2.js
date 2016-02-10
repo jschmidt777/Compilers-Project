@@ -1,18 +1,18 @@
 /* lexer.js  */
  
     //Initialize states for a link list of each kind of token
-
+    /*
     var state0 = new createState0(); //start point of state transition diagram
     var state1 = new createState(1, 4); // accepts id
     var state2 = new createState(2, null); // accepts symbol (might need more for the individual symbols)
     var state3 = new createState(3, null); // accepts digit
     var state4 = new createState(4, null); // accepts keyword
-
+    */
     //Globals
     var currentLineNum = 0;  //TODO: Figure out this functionality
 	var tokenStream = [];
     var insideString = false;
-    var currentState = state0.state;
+    //var currentState = state0.state;
     
 /*
     var stateMatrix = [ //  0-9
@@ -29,8 +29,10 @@
    
     // Definitions for kinds of tokens so they can be compared 
     // with the src code, which will then be added to the token stream. 
-	var identifier = /([a-z])/; // followed by an assign
+    var keyword = /(/'while'|'if'|'print'|'int'|'string'|'boolean'|'false'|'true');
+	var identifier = /([a-z])/; 
     var digit = /(\d)/;
+    var symbol = /(" "|"{"|"}"|"$"|'"')/;
 
 
     function lex()
@@ -53,14 +55,16 @@
             var nextChar = sourceCodeArray[i]+1;
             
             if(digit.test(currentChar)){
-                currentState = state0.nextState2;
+                //currentState = state0.nextState2;
             }else{
                 currentChar = nextChar;
             }
 
+
+
             if(currentState === 3){                                 //checks to see if the char is a digit
                 createToken(currentChar, "digit", currentLineNum);  
-                currentState = state0.state;                        // restart the state transition diagram for the next character
+                //currentState = state0.state;                        // restart the state transition diagram for the next character
             }
             
         }
@@ -102,14 +106,4 @@
             token.kind = kind;
             token.lineNum = lineNum;
             tokenStream.push(token);
-    }
-
-        
-//look at each char in the src code and see what the state needs to be changed to
-//TODO: Find out how to go through char by char and store into a variable for comparison
-        
-    function grabToken() {
-        var ch = '';
-
-        while (isspace(ch)){}
     }
