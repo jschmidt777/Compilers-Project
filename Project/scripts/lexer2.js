@@ -29,10 +29,13 @@
    
     // Definitions for kinds of tokens so they can be compared 
     // with the src code, which will then be added to the token stream. 
-    var keyword = /(/'while'|'if'|'print'|'int'|'string'|'boolean'|'false'|'true');
+    
+    var keyword = /(while|if|print|int|string|boolean|false|true)/;
 	var identifier = /([a-z])/; 
     var digit = /(\d)/;
-    var symbol = /(" "|"{"|"}"|"$"|'"')/;
+    var symbol = /( |{|}|\$|\"|==|!=|=|\+)/; //Space is included as a symbol
+    //var matchToken = "/" + identifier + "|" + digit + "|" + symbol + "/gm";
+    
 
 
     function lex()
@@ -42,37 +45,44 @@
         // Trim the leading and trailing spaces.
         sourceCode = trim(sourceCode);
         // Removes line breaks, tabs, and unnecessary spaces.
-        sourceCode = sourceCode.replace(/(\r\n|\n|\r|)/gm,"");
+        sourceCode = sourceCode.replace(/(\r\n|\n|\r)/gm,"");
         sourceCode = sourceCode.replace(/  +/g, ' ');
 
         //Array to go through the source code character by character.
         var sourceCodeArray = sourceCode.split("");
-
+        var isError = false;
         var currentChar = "";
 
         for (i = 0; i < sourceCodeArray.length; i++){
             currentChar = sourceCodeArray[i];
             var nextChar = sourceCodeArray[i]+1;
+            var matchToken = /((while|if|print|int|string|boolean|false|true)|([a-z])|(\d)|( |{|}|\$|\"|==|!=|=|\+))/gm;
+            possibleKeyWord = "";
             
-            if(digit.test(currentChar)){
-                //currentState = state0.nextState2;
+            
+            if(matchToken.test(currentChar) /*&& identifier.test(nextChar)*/){
+                //TODO: Get longest match with link list concept
+                //while there isn't a match, add the next char to possibleKeyWord, and then check it until it finds the longest match.
+                createToken(currentChar, null, currentLineNum);
+                //possibleKeyWord =+ currentChar;
+                //checkLongestMatch(possibleKeyWord);
             }else{
-                currentChar = nextChar;
+                makeError(currentLineNum, " Invalid token.");
+                isError = true;
             }
-
-
-
-            if(currentState === 3){                                 //checks to see if the char is a digit
-                createToken(currentChar, "digit", currentLineNum);  
-                //currentState = state0.state;                        // restart the state transition diagram for the next character
-            }
-            
         }
-        
-
+        //TODO: add another check for ==
+        //TODO: error checks for EOF, strings, blocks
+        //assignKind(tokenStream);
+        if(!isError){
         return tokenStream;
+        }else{
+        tokenStream = 0;
+        return tokenStream;    
+          //The error message will be displayed depending on what error lex found.  
+        }
         // should return a stream of tokens
-    }
+    }   
 
     //Makes an instance of a token to be added to the tokenStream
     function tokenStruct() {
@@ -83,6 +93,16 @@
             return "[" + this.lexeme + "," + this.kind + ",line:" + this.lineNum + "]";
         }
     }
+
+    function checkLongestMatch(tokens){
+        var longestMatchPatterns = /(while|if|print|int|string|boolean|false|true|==)/;
+        if(longestMatchPatterns.exec(tokens)){
+            createToken(tokens, null, currentLineNum); 
+        }else{
+            checkLongestMatch(tokens);
+        }
+    }    
+
 
     function createState0() {
         this.state = 0;
@@ -106,4 +126,8 @@
             token.kind = kind;
             token.lineNum = lineNum;
             tokenStream.push(token);
+    }
+
+    function makeError(lineNum, message){
+        document.getElementById("taOutput").value = "Lex error on line " + lineNum + ":" + message;
     }
