@@ -33,9 +33,8 @@
     var keyword = /(while|if|print|int|string|boolean|false|true)/;
 	var identifier = /([a-z])/; 
     var digit = /(\d)/;
-    var symbol = /( |{|}|\$|\"|==|!=|=|\+)/; //Space is included as a symbol
+    var symbol = /(("[a-z]*")|{|}|\$|\"|==|!=|=|\+|(\s))/; //Capture any white space or a symbol, including strings
     //var matchToken = "/" + identifier + "|" + digit + "|" + symbol + "/gm";
-    
 
 
     function lex()
@@ -44,43 +43,48 @@
         var sourceCode = document.getElementById("taSourceCode").value;
         // Trim the leading and trailing spaces.
         sourceCode = trim(sourceCode);
-        // Removes line breaks, tabs, and unnecessary spaces.
-        sourceCode = sourceCode.replace(/(\r\n|\n|\r)/gm,"");
-        sourceCode = sourceCode.replace(/  +/g, ' ');
+        
 
-        //Array to go through the source code character by character.
-        var sourceCodeArray = sourceCode.split("");
+        //Array to go through the source code to split it into possible tokens. Pass 1.
+        //Split on any white space or symbol and add them all to an array
+        var sourceCodeArray = sourceCode.split(symbol);
         var isError = false;
-        var currentChar = "";
+        var currentLexeme = ""; //Look at each potential token
 
         for (i = 0; i < sourceCodeArray.length; i++){
-            currentChar = sourceCodeArray[i];
-            var nextChar = sourceCodeArray[i]+1;
+            currentLexeme = sourceCodeArray[i];
+            var nextLexeme = sourceCodeArray[i]+1;
             var matchToken = /((while|if|print|int|string|boolean|false|true)|([a-z])|(\d)|( |{|}|\$|\"|==|!=|=|\+))/gm;
-            possibleKeyWord = "";
             
-            
-            if(matchToken.test(currentChar) /*&& identifier.test(nextChar)*/){
-                //TODO: Get longest match with link list concept
+            //breakOn/splitOn array
+            //new array that doesn't take whitespace
+            //look at white space!
+            //add name to kind (not too important)
+            //3.7 crafting
+            if(matchToken.test(currentLexeme) /*&& identifier.test(nextChar)*/){
                 //while there isn't a match, add the next char to possibleKeyWord, and then check it until it finds the longest match.
-                createToken(currentChar, null, currentLineNum);
+                createToken(currentLexeme, null, currentLineNum);
                 //possibleKeyWord =+ currentChar;
                 //checkLongestMatch(possibleKeyWord);
             }else{
-                makeError(currentLineNum, " Invalid token.");
+                //makeError(currentLineNum, " Invalid or unexpected token.");
                 isError = true;
             }
         }
         //TODO: add another check for ==
         //TODO: error checks for EOF, strings, blocks
         //assignKind(tokenStream);
+
+        return sourceCodeArray;
+        /*
         if(!isError){
         return tokenStream;
         }else{
         tokenStream = 0;
         return tokenStream;    
+        
           //The error message will be displayed depending on what error lex found.  
-        }
+        }*/
         // should return a stream of tokens
     }   
 
@@ -94,14 +98,6 @@
         }
     }
 
-    function checkLongestMatch(tokens){
-        var longestMatchPatterns = /(while|if|print|int|string|boolean|false|true|==)/;
-        if(longestMatchPatterns.exec(tokens)){
-            createToken(tokens, null, currentLineNum); 
-        }else{
-            checkLongestMatch(tokens);
-        }
-    }    
 
 
     function createState0() {
