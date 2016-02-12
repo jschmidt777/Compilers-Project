@@ -23,11 +23,12 @@
 
         // Definitions for kinds of tokens so they can be compared 
         // with the src code, which will then be added to the token stream. 
-        var keyword = /(while|if|print|int|string|boolean|false|true)/gm;
-        var character = /("[a-z]*")/gm; //May not need this
-        var identifier = /([a-z])/gm; 
-        var digit = /(\d)/gm;
-        var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/gm; //Capture any white space or a symbol, including strings
+        var keyword = /(while|if|print|int|string|boolean|false|true)/;
+        var characterList = /("[a-z]*")/; //May not need this
+        var identifier = /([a-z])/; 
+        var digit = /(\d)/;
+        var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/; //Capture any white space or a symbol
+
         
         var splitOnVals = /(while|if|print|int|string|boolean|false|true|\(|\)|{|}|\$|\"|==|!=|=|\+|\s)/;
 
@@ -35,19 +36,12 @@
         //Split on any white space or symbol and add them all to an array
         //Split at any keywords as well
         var sourceCodeArray = sourceCode.split(splitOnVals);
+        //Get rid of white space in the sourceCodeArray, as well as any empty array elements
+        sourceCodeArray = sourceCodeArray.filter(function(lexeme){ return lexeme.replace(/(\r\n|\n|\r|\s)/gm,"")}); //reference: http://stackoverflow.com/questions/281264/remove-empty-elements-from-an-array-in-javascript?rq=1
         var isError = false;
-        var currentLexeme = ""; //Look at each potential token
 
         for (i = 0; i < sourceCodeArray.length; i++){
-            currentLexeme = sourceCodeArray[i];
-            var nextLexeme = sourceCodeArray[i]+1;
-            //var matchToken = /((while|if|print|int|string|boolean|false|true)|([a-z])|(\d)|({|}|\$|\"|==|!=|=|\+))/gm;
-            
-            //breakOn/splitOn array
-            //new array that doesn't take whitespace
-            //look at white space!
-            //add name to kind (not too important)
-            //3.7 crafting
+            var currentLexeme = sourceCodeArray[i]; //Look at each potential token            
             if(keyword.test(currentLexeme)){
                 createToken(currentLexeme, "keyword", currentLineNum);
             }else if (identifier.test(currentLexeme)){
@@ -55,7 +49,7 @@
             }else if (digit.test(currentLexeme)){
                 createToken(currentLexeme, "digit", currentLineNum);
             }else if (symbol.test(currentLexeme)){
-                createToken(currentLexeme, "symbol", currentLineNum);
+                createToken(currentLexeme, "symbol", currentLineNum); //maybe embed a switch case so that the kind of the symbol can be more specific
             }else{
                 makeError(currentLineNum, " Invalid or unexpected token.");
                 isError = true;
@@ -65,22 +59,22 @@
         //TODO: error checks for EOF, strings, blocks
         //assignKind(tokenStream);
 
-        return tokenStream;
         
-        if(!isError){
+        return tokenStream;
+        /*if(!isError){
         return tokenStream;
         }else{
         tokenStream = "nothing";
         return tokenStream;    
         //The error message will be displayed depending on what error lex found.  
         // should return a stream of tokens
-        }
+        }*/
     } 
 
     //Makes an instance of a token to be added to the tokenStream
     function tokenStruct() {
         this.lexeme = "";        
-        this.kind = ""; //TODO: modify this to be one of only a couple kinds of tokens.
+        this.kind = ""; 
         this.lineNum = -1;
         this.toString = function(){
             return "<" + this.lexeme + "," + this.kind + ",line:" + this.lineNum + ">";
@@ -99,3 +93,5 @@
     function makeError(lineNum, message){
         document.getElementById("taOutput").value = "Lex error on line " + lineNum + ":" + message + "\n";
     }
+
+    
