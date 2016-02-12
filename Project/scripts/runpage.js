@@ -19,12 +19,14 @@
            window.location.reload(true); 
             //putMessage("Cannot compile multiple times yet."); //TODO: Fix this so the user can compile multiple times with a sticky input
         }    
+         
     }
     
     function btnCompile_click() {        
         // This is executed as a result of the user pressing the 
         // "compile" button between the two text areas, above.  
         // Note the <input> element's event handler: onclick="btnCompile_click();
+       
         init();
         putMessage("Compilation Started");
         // Grab the tokens from the lexer . . .
@@ -124,3 +126,5 @@
         }
         return thisToken;
     }
+
+    

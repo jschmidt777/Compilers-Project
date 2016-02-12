@@ -5,8 +5,6 @@
     var currentLineNum = 0;  //TODO: Figure out this functionality
 	var tokenStream = [];
     var insideString = false;
-
-    //TODO: Make count of quotation marks and test if there is an even amount of them.
    
     function lex()
     {
@@ -18,26 +16,30 @@
         // Definitions for kinds of tokens so they can be compared 
         // with the src code, which will then be added to the token stream. 
         var keyword = /(while|if|print|int|string|boolean|false|true)/;
-        var characterList = /("[a-z]*")/; //May not need this
+        var characterList = /("[a-z ]*")/; 
         var identifier = /([a-z])/; 
         var digit = /(\d)/;
         var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/; 
 
-        
-        var splitOnVals = /(while|if|print|int|string|boolean|false|true|\(|\)|{|}|\$|\"|==|!=|=|\+|\s)/;
+        //Split on any white space, deliminators, and even id, char, and digits. 
+        //Basically, split on anything we may find interesting, since that will be tokenized.
+        var splitOnVals = /(while|if|print|int|string|boolean|false|true|"[a-z ]*"|[a-z]|[0-9]|\"|\(|\)|{|}|\$|==|!=|=|\+|\s|)/;
+                            //Keywords                                     id/chars/digits              deliminators
 
         //Array to go through the source code to split it into possible tokens. Pass 1.
-        //Split on any white space or symbol and add them all to an array
-        //Split at any keywords as well
         var sourceCodeArray = sourceCode.split(splitOnVals);
         //Get rid of white space in the sourceCodeArray, as well as any empty array elements
         sourceCodeArray = sourceCodeArray.filter(function(lexeme){ return lexeme.replace(/(\r\n|\n|\r|\s)/gm,"")}); //reference: http://stackoverflow.com/questions/281264/remove-empty-elements-from-an-array-in-javascript?rq=1
         var isError = false;
+        var quotesCount = 0;
 
         for (i = 0; i < sourceCodeArray.length; i++){
-            var currentLexeme = sourceCodeArray[i]; //Look at each potential token           
+            var currentLexeme = sourceCodeArray[i]; //Look at each potential token   
+            var nextLexeme = sourceCodeArray[i]+1;        
             if(keyword.test(currentLexeme)){
                 createToken(currentLexeme, "keyword", currentLineNum);
+            }else if (characterList.test(currentLexeme)){
+                createToken(currentLexeme, "characterList", currentLineNum);    
             }else if (identifier.test(currentLexeme)){
                 createToken(currentLexeme, "identifier", currentLineNum);
             }else if (digit.test(currentLexeme)){
@@ -58,6 +60,17 @@
                     break;
                     case "\"": //This will need to be based on the quotation count
                         createToken(currentLexeme, "quotation", currentLineNum);
+                    /*  May not even need this
+                        if(quotesCount == 0){
+                            createToken(currentLexeme, "openQuotation", currentLineNum);
+                            quotesCount++;
+                        }else if (quotesCount.odd()){
+                            createToken(currentLexeme, "closeQuotation", currentLineNum);
+                            quotesCount++;
+                        }else{
+                            createToken(currentLexeme, "openQuotation", currentLineNum);
+                            quotesCount++;
+                        }*/
                     break;
                     case "==":
                         createToken(currentLexeme, "testEquality", currentLineNum);
@@ -83,6 +96,7 @@
         }
         //TODO: error checks for EOF, strings
         //if there was never an assigned EOF, find the last assigned } and add a $, plus a warning saying it was added
+        //if quoteCount is greater than one, throw an error
 
         if(!isError){
         return tokenStream;
