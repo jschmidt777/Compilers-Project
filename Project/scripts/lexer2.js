@@ -5,13 +5,7 @@
     var currentLineNum = 0;  //TODO: Figure out this functionality
 	var tokenStream = [];
     var insideString = false;
-    
-    //while, if, print, int, string, boolean, false, true
-   
-    
-    
-    
-    //"[a-z ]*" like this idea, but can't use it since a string is not a token. 
+
     //TODO: Make count of quotation marks and test if there is an even amount of them.
    
     function lex()
@@ -27,7 +21,7 @@
         var characterList = /("[a-z]*")/; //May not need this
         var identifier = /([a-z])/; 
         var digit = /(\d)/;
-        var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/; //Capture any white space or a symbol
+        var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/; 
 
         
         var splitOnVals = /(while|if|print|int|string|boolean|false|true|\(|\)|{|}|\$|\"|==|!=|=|\+|\s)/;
@@ -41,7 +35,7 @@
         var isError = false;
 
         for (i = 0; i < sourceCodeArray.length; i++){
-            var currentLexeme = sourceCodeArray[i]; //Look at each potential token            
+            var currentLexeme = sourceCodeArray[i]; //Look at each potential token           
             if(keyword.test(currentLexeme)){
                 createToken(currentLexeme, "keyword", currentLineNum);
             }else if (identifier.test(currentLexeme)){
@@ -49,26 +43,55 @@
             }else if (digit.test(currentLexeme)){
                 createToken(currentLexeme, "digit", currentLineNum);
             }else if (symbol.test(currentLexeme)){
-                createToken(currentLexeme, "symbol", currentLineNum); //maybe embed a switch case so that the kind of the symbol can be more specific
+                switch(currentLexeme){
+                    case "{":
+                        createToken(currentLexeme, "openBlock", currentLineNum);
+                    break;
+                    case "}":
+                        createToken(currentLexeme, "closeBlock", currentLineNum);
+                    break;
+                    case "(":
+                        createToken(currentLexeme, "openParen", currentLineNum);
+                    break;
+                    case ")":
+                        createToken(currentLexeme, "closeParen", currentLineNum);
+                    break;
+                    case "\"": //This will need to be based on the quotation count
+                        createToken(currentLexeme, "quotation", currentLineNum);
+                    break;
+                    case "==":
+                        createToken(currentLexeme, "testEquality", currentLineNum);
+                    break;
+                    case "!=":
+                        createToken(currentLexeme, "testInEquality", currentLineNum);
+                    break;
+                    case "=":
+                        createToken(currentLexeme, "assign", currentLineNum);
+                    break;
+                    case "+":
+                        createToken(currentLexeme, "add", currentLineNum);
+                    break;
+                    case "$":
+                        createToken(currentLexeme, "EOF", currentLineNum);
+                    break;
+                    default:  createToken(currentLexeme, "symbol", currentLineNum);
+                }
             }else{
                 makeError(currentLineNum, " Invalid or unexpected token.");
                 isError = true;
             }
         }
-        //TODO: add another check for ==
-        //TODO: error checks for EOF, strings, blocks
-        //assignKind(tokenStream);
+        //TODO: error checks for EOF, strings
+        //if there was never an assigned EOF, find the last assigned } and add a $, plus a warning saying it was added
 
-        
-        return tokenStream;
-        /*if(!isError){
+        if(!isError){
         return tokenStream;
         }else{
         tokenStream = "nothing";
         return tokenStream;    
         //The error message will be displayed depending on what error lex found.  
         // should return a stream of tokens
-        }*/
+        }
     } 
 
     //Makes an instance of a token to be added to the tokenStream
