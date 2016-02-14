@@ -4,6 +4,7 @@
     //Globals
     var currentLineNum = 0;  //TODO: Figure out this functionality
 	var tokenStream = [];
+    var lexemesArr = [];
     
     function lex()
     {
@@ -16,9 +17,10 @@
         // with the src code, which will then be added to the token stream. 
         var keyword = /(while|if|print|int|string|boolean|false|true)/;
         var characterList = /("[a-z ]*")/; //May not need this
-        var identifier = /([a-z])/; 
+        var alpha = /([a-z])/; 
         var digit = /(\d)/;
         var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/; 
+        var whitespace = /\s/;
 
         //Split on any white space, deliminators, and even id, char, and digits. 
         //Basically, split on anything we may find interesting, since that will be tokenized.
@@ -27,81 +29,85 @@
 
         //Array to go through the source code to split it into possible tokens. Pass 1.
         var sourceCodeArray = sourceCode.split(splitOnVals);
-        //Get rid of white space in the sourceCodeArray, as well as any empty array elements
-        sourceCodeArray = sourceCodeArray.filter(function(lexeme){ return lexeme.replace(/(\r\n|\n|\r|\s)/gm,"")}); //reference: http://stackoverflow.com/questions/281264/remove-empty-elements-from-an-array-in-javascript?rq=1
+
+        sourceCodeArray = sourceCodeArray.filter(function(e){ return e.replace(/(\r\n|\r)/gm,"")/*return e != undefined || e != ""*/});
+            
+        //Make the elements in the sourceCodeArray lexemes
+        var newline = /(\n)/;
+        currentLineNum = 1; //There has to be at least one line... right?
+        for (i = 0; i < sourceCodeArray.length; i++){
+            if(newline.test(sourceCodeArray[i])){
+                currentLineNum++;
+                createLexeme(sourceCodeArray[i], currentLineNum);
+            }else if(!newline.test(sourceCodeArray[i])){
+                createLexeme(sourceCodeArray[i], currentLineNum);
+            }
+        }
+        //return lexemesArr;       
+        //Get rid of white space in the lexemesArr, as well as any empty array elements
+        //lexemesArr = lexemesArr.filter(function(lexeme){ return lexeme.replace(/(\r\n|\n|\r|\s)/gm,"")});
+        sourceCodeArray = sourceCodeArray.filter(function(lexeme){ return !whitespace.test(lexeme.frag)/*.replace(/(\r\n|\n|\r|\s)/gm,"")*/}); //reference: http://stackoverflow.com/questions/281264/remove-empty-elements-from-an-array-in-javascript?rq=1
         var isError = false;
         var insideString = false;
-
-        for (i = 0; i < sourceCodeArray.length; i++){
-            var currentLexeme = sourceCodeArray[i]; //Look at each potential token   
-            var nextLexeme = sourceCodeArray[i]+1;        
-            if(keyword.test(currentLexeme)){
-                createToken(currentLexeme, "keyword", currentLineNum);
-            }else if (identifier.test(currentLexeme) && !insideString){
-                createToken(currentLexeme, "identifier", currentLineNum);
-            }else if (identifier.test(currentLexeme) && insideString){
-                createToken(currentLexeme, "char", currentLineNum);
-            }else if (digit.test(currentLexeme)){
-                createToken(currentLexeme, "digit", currentLineNum);
-            }else if (symbol.test(currentLexeme)){
-                switch(currentLexeme){
+       
+        for (i = 0; i < lexemesArr.length; i++){
+            var currentLexeme = lexemesArr[i]; //Look at each potential token          
+            if(keyword.test(currentLexeme.frag)){
+                createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);//might have something to do with the .lineNum
+            }else if (alpha.test(currentLexeme.frag) && !insideString){
+                createToken(currentLexeme.frag, "identifier", currentLexeme.lineNum);
+            }else if (alpha.test(currentLexeme.frag) && insideString){
+                createToken(currentLexeme.frag, "char", currentLexeme.lineNum);
+            }else if (digit.test(currentLexeme.frag)){
+                createToken(currentLexeme.frag, "digit", currentLexeme.lineNum);
+            }else if (symbol.test(currentLexeme.frag)){
+                switch(currentLexeme.frag){
                     case "{":
-                        createToken(currentLexeme, "openBlock", currentLineNum);
+                        createToken(currentLexeme.frag, "openBlock", currentLexeme.lineNum);
                         //count for these?
                     break;
                     case "}":
-                        createToken(currentLexeme, "closeBlock", currentLineNum);
+                        createToken(currentLexeme.frag, "closeBlock", currentLexeme.lineNum);
                         //count for these?
                     break;
                     case "(":
-                        createToken(currentLexeme, "openParen", currentLineNum);
+                        createToken(currentLexeme.frag, "openParen", currentLexeme.lineNum);
                         //count for these?
                     break;
                     case ")":
-                        createToken(currentLexeme, "closeParen", currentLineNum);
+                        createToken(currentLexeme.frag, "closeParen", currentLexeme.lineNum);
                         //count for these?
                     break;
                     case "\"": //This will need to be based on the quotation count
                         if(!insideString){
-                            createToken(currentLexeme, "openQuotation", currentLineNum);
+                            createToken(currentLexeme.frag, "openQuotation", currentLexeme.lineNum);
                             insideString = true;
                         }else if(insideString){
-                            createToken(currentLexeme, "closeQuotation", currentLineNum);
+                            createToken(currentLexeme.frag, "closeQuotation", currentLexeme.lineNum);
                             insideString = false;
                         }
-                
-                    /*  May not even need this
-                        if(quotesCount == 0){
-                            createToken(currentLexeme, "openQuotation", currentLineNum);
-                            quotesCount++;
-                        }else if (quotesCount.odd()){
-                            createToken(currentLexeme, "closeQuotation", currentLineNum);
-                            quotesCount++;
-                        }else{
-                            createToken(currentLexeme, "openQuotation", currentLineNum);
-                            quotesCount++;
-                        }*/
                     break;
                     case "==":
-                        createToken(currentLexeme, "testEquality", currentLineNum);
+                        createToken(currentLexeme.frag, "testEquality", currentLexeme.lineNum);
                     break;
                     case "!=":
-                        createToken(currentLexeme, "testInEquality", currentLineNum);
+                        createToken(currentLexeme.frag, "testInEquality", currentLexeme.lineNum);
                     break;
                     case "=":
-                        createToken(currentLexeme, "assign", currentLineNum);
+                        createToken(currentLexeme.frag, "assign", currentLexeme.lineNum);
                     break;
                     case "+":
-                        createToken(currentLexeme, "add", currentLineNum);
+                        createToken(currentLexeme.frag, "add", currentLexeme.lineNum);
                     break;
                     case "$":
-                        createToken(currentLexeme, "EOF", currentLineNum);
+                        createToken(currentLexeme.frag, "EOF", currentLexeme.lineNum);
                     break;
-                    default:  createToken(currentLexeme, "symbol", currentLineNum);
+                    default:  createToken(currentLexeme.frag, "symbol", currentLexeme.lineNum);
+                    break;
                 }
             
             }else{
-                makeError(currentLineNum, " Invalid or unexpected token.");
+                makeError(currentLexeme.lineNum, " Invalid or unexpected token.");
                 isError = true;
                
         }
@@ -109,7 +115,7 @@
         //TODO: error checks for EOF, strings
         //if there was never an assigned EOF, find the last assigned } and add a $, plus a warning saying it was added
         if(insideString){
-                    makeError(currentLineNum, " Unclosed quotation.");
+                    makeError(currentLexeme.lineNum, " Unclosed quotation.");
                     isError = true;
                 }
         if(!isError){
@@ -122,6 +128,21 @@
         }
     } 
 
+    function lexemeStruct(){
+        this.frag = "";
+        this.lineNum = -1;
+        /*this.toString = function(){
+            return "<" + this.frag + ",line:" + this.lineNum + ">";
+        }*/
+    }
+
+    function createLexeme(frag,lineNum){
+        var lexeme = new lexemeStruct();
+            lexeme.frag = frag;
+            lexeme.lineNum = lineNum;
+            lexemesArr.push(lexeme);
+    }
+
     //Makes an instance of a token to be added to the tokenStream
     function tokenStruct() {
         this.lexeme = "";        
@@ -131,7 +152,6 @@
             return "<" + this.lexeme + "," + this.kind + ",line:" + this.lineNum + ">";
         }
     }
-
 
     function createToken(lexeme, kind, lineNum){
         var token = new tokenStruct();
@@ -145,4 +165,16 @@
         document.getElementById("taOutput").value = "Lex error on line " + lineNum + ":" + message + "\n";
     }
 
-    
+    /*function identifyLexemes(srcCode){
+    //Assigns lexemes and their line number. Makes sourceCodeArray an array of lexemes, so it's easier to get the line numbers.
+    var newline = /(\n)/;
+    currentLineNum = 1; //There has to be at least one line... right?
+        for (i = 0; i < srcCode.length; i++){
+            if(newline.test(srcCode[i])){
+                currentLineNum++;
+                srcCode[i] = createLexeme(srcCode[i], currentLineNum);
+            }else if(!newline.test(srcCode[i])){
+                srcCode[i] = createLexeme(srcCode[i], currentLineNum);
+            }
+        }
+    }*/
