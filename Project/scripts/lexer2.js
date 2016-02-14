@@ -20,6 +20,7 @@
         var digit = /(\d)/;
         var symbol = /(\(|\)|{|}|\$|\"|==|!=|=|\+)/; 
         var whitespace = /\s/;
+        var space = /( +)/;
 
         //Split on any white space, deliminators, and even id, char, and digits. 
         //Basically, split on anything we may find interesting, since that will be tokenized.
@@ -35,35 +36,45 @@
         //Make the token stream a 2D array, where a new array is created when a new line is encountered
         //Then, accesss the line num but which element it is in the array
             
-        //Make the elements in the sourceCodeArray lexemes
         var newline = /(\n)/;
         var currentLineNum = 1;  //Initialize the line number
         for (i = 0; i < sourceCodeArray.length; i++){
+            /*if(!newline.test(sourceCodeArray[i])){
+                createLexeme(sourceCodeArray[i], currentLineNum);   
+            }else{
+                createLexeme(sourceCodeArray[i], currentLineNum);
+                currentLineNum++;
+            }*/
             if(newline.test(sourceCodeArray[i]) && currentLineNum == 0){
                 currentLineNum++; //There has to be at least one line... right?
-                createLexeme(sourceCodeArray[i], currentLineNum);
+                createLexeme(sourceCodeArray[i], currentLineNum, false);
             }else if(newline.test(sourceCodeArray[i]) && currentLineNum >= 1){
                 currentLineNum++; 
-                createLexeme(sourceCodeArray[i], currentLineNum);
+                createLexeme(sourceCodeArray[i], currentLineNum, false);
+            }else if(space.test(sourceCodeArray[i])){
+                createLexeme(sourceCodeArray[i], currentLineNum, true);
             }else if(!newline.test(sourceCodeArray[i])){
-                createLexeme(sourceCodeArray[i], currentLineNum);
+                createLexeme(sourceCodeArray[i], currentLineNum, false);
             }
         } 
         
         //Get rid of white space in the lexemesArr, as well as any empty array elements
-        lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)});
+        lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)||!space.test(lexeme.isSpaceChar)});
         var isError = false;
         var insideString = false;
        
         for (i = 0; i < lexemesArr.length; i++){
             var currentLexeme = lexemesArr[i]; //Look at each potential token     
-            
-            if(keyword.test(currentLexeme.frag)){
-                createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);//might have something to do with the .lineNum
+            if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && insideString){  //maybe the wrong place for this
+                createToken(currentLexeme.frag, "spaceChar", currentLexeme.lineNum); 
+            }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && !insideString){
+                tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)});
+            }else if(keyword.test(currentLexeme.frag) && !insideString){
+                createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);
             }else if (alpha.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "identifier", currentLexeme.lineNum);
-            }else if (alpha.test(currentLexeme.frag) && insideString){
-                createToken(currentLexeme.frag, "char", currentLexeme.lineNum);
+            }else if (alpha.test(currentLexeme.frag) && insideString){                                        
+                createToken(currentLexeme.frag, "stringChar", currentLexeme.lineNum); //will call a keyword a char if it is in a string   
             }else if (digit.test(currentLexeme.frag)){
                 createToken(currentLexeme.frag, "digit", currentLexeme.lineNum);
             }else if (symbol.test(currentLexeme.frag)){
@@ -81,15 +92,14 @@
                         createToken(currentLexeme.frag, "closeParen", currentLexeme.lineNum);
                     break;
                     case "\"": 
-                        if(!insideString && i != lexemesArr.length){
+                        if(!insideString){
                             createToken(currentLexeme.frag, "openQuotation", currentLexeme.lineNum);
                             insideString = true;
-                        }else if(insideString && i != lexemesArr ){
+                        }else if(insideString){
                             createToken(currentLexeme.frag, "closeQuotation", currentLexeme.lineNum);
                             insideString = false;
                         }
                     break;
-                    //case for spaces in a string 
                     case "==":
                         createToken(currentLexeme.frag, "testEquality", currentLexeme.lineNum);
                     break;
@@ -138,15 +148,14 @@
     function lexemeStruct(){
         this.frag = "";
         this.lineNum = -1;
-        /*this.toString = function(){
-            return "<" + this.frag + ",line:" + this.lineNum + ">";
-        }*/
+        this.isSpaceChar = false;
     }
 
-    function createLexeme(frag,lineNum){
+    function createLexeme(frag,lineNum,isSpaceChar){
         var lexeme = new lexemeStruct();
             lexeme.frag = frag;
             lexeme.lineNum = lineNum;
+            lexeme.isSpaceChar = isSpaceChar;
             lexemesArr.push(lexeme);
     }
 
