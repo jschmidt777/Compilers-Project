@@ -2,7 +2,6 @@
  
     
     //Globals
-    var currentLineNum = 0;  //TODO: Figure out this functionality
 	var tokenStream = [];
     var lexemesArr = [];
     
@@ -31,27 +30,34 @@
         var sourceCodeArray = sourceCode.split(splitOnVals);
 
         sourceCodeArray = sourceCodeArray.filter(function(e){ return e.replace(/(\r\n|\r)/gm,"")/*return e != undefined || e != ""*/});
+
+        //Other way I thought to do this...
+        //Make the token stream a 2D array, where a new array is created when a new line is encountered
+        //Then, accesss the line num but which element it is in the array
             
         //Make the elements in the sourceCodeArray lexemes
         var newline = /(\n)/;
-        currentLineNum = 1; //There has to be at least one line... right?
+        var currentLineNum = 1;  //Initialize the line number
         for (i = 0; i < sourceCodeArray.length; i++){
-            if(newline.test(sourceCodeArray[i])){
-                currentLineNum++;
+            if(newline.test(sourceCodeArray[i]) && currentLineNum == 0){
+                currentLineNum++; //There has to be at least one line... right?
+                createLexeme(sourceCodeArray[i], currentLineNum);
+            }else if(newline.test(sourceCodeArray[i]) && currentLineNum >= 1){
+                currentLineNum++; 
                 createLexeme(sourceCodeArray[i], currentLineNum);
             }else if(!newline.test(sourceCodeArray[i])){
                 createLexeme(sourceCodeArray[i], currentLineNum);
             }
-        }
-        //return lexemesArr;       
+        } 
+        
         //Get rid of white space in the lexemesArr, as well as any empty array elements
-        //lexemesArr = lexemesArr.filter(function(lexeme){ return lexeme.replace(/(\r\n|\n|\r|\s)/gm,"")});
-        sourceCodeArray = sourceCodeArray.filter(function(lexeme){ return !whitespace.test(lexeme.frag)/*.replace(/(\r\n|\n|\r|\s)/gm,"")*/}); //reference: http://stackoverflow.com/questions/281264/remove-empty-elements-from-an-array-in-javascript?rq=1
+        lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)});
         var isError = false;
         var insideString = false;
        
         for (i = 0; i < lexemesArr.length; i++){
-            var currentLexeme = lexemesArr[i]; //Look at each potential token          
+            var currentLexeme = lexemesArr[i]; //Look at each potential token     
+            
             if(keyword.test(currentLexeme.frag)){
                 createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);//might have something to do with the .lineNum
             }else if (alpha.test(currentLexeme.frag) && !insideString){
@@ -64,29 +70,26 @@
                 switch(currentLexeme.frag){
                     case "{":
                         createToken(currentLexeme.frag, "openBlock", currentLexeme.lineNum);
-                        //count for these?
                     break;
                     case "}":
                         createToken(currentLexeme.frag, "closeBlock", currentLexeme.lineNum);
-                        //count for these?
                     break;
                     case "(":
                         createToken(currentLexeme.frag, "openParen", currentLexeme.lineNum);
-                        //count for these?
                     break;
                     case ")":
                         createToken(currentLexeme.frag, "closeParen", currentLexeme.lineNum);
-                        //count for these?
                     break;
-                    case "\"": //This will need to be based on the quotation count
-                        if(!insideString){
+                    case "\"": 
+                        if(!insideString && i != lexemesArr.length){
                             createToken(currentLexeme.frag, "openQuotation", currentLexeme.lineNum);
                             insideString = true;
-                        }else if(insideString){
+                        }else if(insideString && i != lexemesArr ){
                             createToken(currentLexeme.frag, "closeQuotation", currentLexeme.lineNum);
                             insideString = false;
                         }
                     break;
+                    //case for spaces in a string 
                     case "==":
                         createToken(currentLexeme.frag, "testEquality", currentLexeme.lineNum);
                     break;
@@ -108,16 +111,20 @@
             
             }else{
                 makeError(currentLexeme.lineNum, " Invalid or unexpected token.");
-                isError = true;
-               
+                isError = true;               
         }
     }
-        //TODO: error checks for EOF, strings
-        //if there was never an assigned EOF, find the last assigned } and add a $, plus a warning saying it was added
+        //TODO: error checks for EOF
+        //if there was never an assigned EOF... this might not actually work: find the last assigned } and add a $, plus a warning saying it was added
         if(insideString){
-                    makeError(currentLexeme.lineNum, " Unclosed quotation.");
+            var errorQuote = tokenStream.filter(function(token){
+                if (token.kind == "openQuotation"){
                     isError = true;
+                    return makeError(token.lineNum, " did not find a matching closeQuotation.");
                 }
+            });
+        }
+        
         if(!isError){
         return tokenStream;
         }else{
