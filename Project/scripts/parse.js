@@ -1,6 +1,12 @@
 /*parse.js*/ 
 
+//Uses the globals on runpage.js
+//Note: the parse functions go in order of traversal
+//so it first looks to see if it's a program, then a block, then a statement... etc.
+//See grammar.pdf on labouseur.com under "Compilers" to see the order of traversal in more detail.
+
 //TODO: Verbose functionality
+    //Use linenum for this
 
 
  function parse() {
@@ -57,27 +63,42 @@
             var keywordLexeme = currentToken.lexeme;
             switch(keywordLexeme){
                 case "while":
+                        parseWhileStatement();
                 break;
                 case "if":
+                        parseIfStatement();
                 break;
                 case "print":
+                        parsePrintStatement();
                 break;
                 case "int":
+                        parseVarDecl();
                 break;
                 case "string":
+                        parseVarDecl();
                 break;
                 case "boolean":
+                        parseVarDecl();
                 break;
                 default: putMessage("You broke me!");
                 break;
             }
-        }else{
-            matchAndConsume("identifier");
+        }else if (currentToken.kind == "identifier"){
+            // must be an identifier, which means an assignment statement
+            parseAssignmentStatement();
         }
+    }
+
+    function parseVarDecl(){
+        //could change this to take a parameter to make it more efficient
+        matchAndConsume("type");
+        matchAndConsume("identifier");
     }
 
     function matchAndConsume(expectedKind) {
         // Validate that we have the expected token kind and get the next token.
+
+        //TODO: Make a function for what I do in the cases, and use this to check if I do verbose output
         switch(expectedKind) {
             case "openBlock":
                             putMessage("Expecting an openBlock");
@@ -85,7 +106,7 @@
                                putMessage("Got an openBlock!"); 
                             }else{
                                 errorCount++;
-                                putMessage("NOT an openBlock.  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT an openBlock.  Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "closeBlock":
@@ -94,7 +115,7 @@
                                putMessage("Got an closeBlock!"); 
                             }else{
                                 errorCount++;
-                                putMessage("NOT closeBlock.  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT closeBlock.  Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "EOF":
@@ -104,7 +125,7 @@
                             }else{
                                 //create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT EOF  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT EOF  Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "identifier":
@@ -112,12 +133,22 @@
                             if(currentToken.kind == "identifier"){
                                putMessage("Got an identifier!"); 
                             }else{
-                                //create token EOF and put a nonfatal warning in
+                                //TODO:create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT identifier  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT an identifier  Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
-            default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + ".");
+            case "type":
+                            putMessage("Expecting a type declaration");
+                            if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean" ){
+                               putMessage("Got a type declaration!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a type declaration Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;
+            default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
                             break;			
         }
         // Consume another token, having just checked this one, because that 
@@ -131,7 +162,7 @@
         {
             // If we're not at EOF, then return the next token in the stream and advance the index.
             thisToken = tokens[tokenIndex];
-            putMessage("Current token:" + thisToken);
+            //putMessage("Current token:" + thisToken);
             tokenIndex++;
         }
         return thisToken;
