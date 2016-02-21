@@ -39,6 +39,7 @@
             
         var newline = /(\n)/;
         var currentLineNum = 1;  //Initialize the line number
+        //TODO: Take out some of these checks that aren't necessary
         for (i = 0; i < sourceCodeArray.length; i++){
             if(newline.test(sourceCodeArray[i]) && currentLineNum == 0){
                 currentLineNum++; //There has to be at least one line... right?
@@ -66,22 +67,12 @@
             var currentLexeme = lexemesArr[i]; //Look at each potential token     
             if(keyword.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);
-            /*}else if(keyword.test(currentLexeme.frag) && insideString){
-                //reason I don't really like this: it's not very consistent
-                var keywordChars = [];
-                keywordChars = currentLexeme.frag.split(alpha);
-                keywordChars = keywordChars.filter(function(lexeme){ return lexeme != ""});
-                for (i = 0; i < keywordChars.length; i++){
-                    createToken(keywordChars[i], "stringChar", currentLexeme.lineNum);
-                }
-        
-               //TODO: figure out why I'm missing my last quote
-            */}else if (alpha.test(currentLexeme.frag) && !insideString){
+            }else if (alpha.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "identifier", currentLexeme.lineNum);
             }else if (alpha.test(currentLexeme.frag) && insideString){                                        
                 createToken(currentLexeme.frag, "stringChar", currentLexeme.lineNum); 
-                //will call a keyword a char if it is in a string... probably need to fix this in the future (new array and a loop)
-                //kinda want a better solution for if a keyword is inside a string (maybe use the .filter method?)   
+                //will call a keyword a char if it is in a string
+                //kinda want a better solution for if a keyword is inside a string
             }else if (digit.test(currentLexeme.frag)){
                 createToken(currentLexeme.frag, "digit", currentLexeme.lineNum);
             }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && insideString){  
@@ -135,9 +126,7 @@
                 isError = true;               
         }
     }
-        //TODO: error checks for EOF
-        //if there was never an assigned EOF... this might not actually work: find the last assigned } and add a $, plus a warning saying it was added
-        return tokenStream;
+
         if(insideString){
             var errorQuote = tokenStream.filter(function(token){
                 if (token.kind == "openQuotation"){
