@@ -56,16 +56,19 @@
         
         //Get rid of white space in the lexemesArr, as well as any empty array elements
         lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)||!space.test(lexeme.isSpaceChar)});
-        var isError = false;
+        lexemesArr = lexemesArr.filter(function(lexeme){ return !newline.test(lexeme.frag)});
+        var isError = false;                             //return what is not a newline
         var insideString = false;
-
+        //return lexemesArr;
         var lexArrLen= lexemesArr.length;
 
-
-       
         for (i = 0; i < lexArrLen; i++){
             var currentLexeme = lexemesArr[i]; //Look at each potential token     
-            if(keyword.test(currentLexeme.frag) && !insideString){
+            if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && insideString){  
+                createToken("(space)", "stringChar", currentLexeme.lineNum); 
+            }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && !insideString){
+                tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)}); //not very efficient, though it does the job
+            }else if(keyword.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);
             }else if (alpha.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "identifier", currentLexeme.lineNum);
@@ -75,10 +78,6 @@
                 //kinda want a better solution for if a keyword is inside a string
             }else if (digit.test(currentLexeme.frag)){
                 createToken(currentLexeme.frag, "digit", currentLexeme.lineNum);
-            }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && insideString){  
-                createToken("(space)", "stringChar", currentLexeme.lineNum); 
-            }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && !insideString){
-                tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)}); //not very efficient, though it does the job
             }else if (symbol.test(currentLexeme.frag)){
                 switch(currentLexeme.frag){
                     case "{":
@@ -139,7 +138,7 @@
         if(!isError){
         return tokenStream;
         }else{
-        tokenStream = "nothing";
+        tokenStream = null;
         return tokenStream;    
         //The error message will be displayed depending on what error lex found.  
         // should return a stream of tokens

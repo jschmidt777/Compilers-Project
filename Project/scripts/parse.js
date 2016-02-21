@@ -1,36 +1,78 @@
+/*parse.js*/ 
+
+//TODO: Verbose functionality
+
+
  function parse() {
         putMessage("\n" + "------------------------");
         putMessage(" Parsing [" + tokens + "]");              
         putMessage("------------------------");
+        putMessage("\n");
         // Grab the next token.
         currentToken = getNextToken();
-        // A valid parse derives the G(oal) production, so begin there.
-        parseG();
+        // A valid parse derives the program production, so begin there.
+        parseProgram();
         // Report the results.
         putMessage("Parsing found " + errorCount + " error(s).");        
     }
     
-    function parseG() {
-        // A G(oal) production (or program production) can only be an block, so parse the block production.
+    function parseProgram() {
+        // A program production can only produce a block, so parse the block production.
         parseBlock();
+        matchAndConsume("EOF");
+        //TODO: have a check here to execute parseBlock again if theres more tokens
     }
 
     function parseBlock() {
         matchAndConsume("openBlock");
-        //parseStatementList();
-        //Does not exist yet
+        parseStatementList();
+        // The only thing that can be in a block is a statementlist
+        // Though statementlist is more complex
         matchAndConsume("closeBlock");
-        matchAndConsume("EOF");
+        
         // Look ahead 1 char (which is now in currentToken because matchAndConsume 
         // consumes another one) and see which E production to follow.
-        if (currentToken != EOF) {
-            // We're not done, we expect to have an op.
-            matchAndConsume("op");
-            parseBlock();
+        /*if (currentToken != EOF) {
+            // We're not done, we expect to have another program
+            //parseBlock();
         } else {
             // There is nothing else in the token stream, 
-            // and that's cool since E --> digit is valid.
             putMessage("EOF reached");
+        }*/
+    }
+
+    function parseStatementList(){
+        if(currentToken.kind == "keyword" || currentToken.kind == "identifier" || currentToken.kind == "openBlock"){
+            parseStatement();
+        }else{
+            //Do nothing. Epsilon production.
+        }
+    }
+
+    function parseStatement(){
+        if(currentToken.kind == "openBlock"){
+            parseBlock();
+            //go back to block since it must be an open block
+        }else if (currentToken.kind == "keyword"){
+            var keywordLexeme = currentToken.lexeme;
+            switch(keywordLexeme){
+                case "while":
+                break;
+                case "if":
+                break;
+                case "print":
+                break;
+                case "int":
+                break;
+                case "string":
+                break;
+                case "boolean":
+                break;
+                default: putMessage("You broke me!");
+                break;
+            }
+        }else{
+            matchAndConsume("identifier");
         }
     }
 
@@ -43,7 +85,7 @@
                                putMessage("Got an openBlock!"); 
                             }else{
                                 errorCount++;
-                                putMessage("NOT an openBlock.  Error at position " + tokenIndex + ".");
+                                putMessage("NOT an openBlock.  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "closeBlock":
@@ -52,32 +94,27 @@
                                putMessage("Got an closeBlock!"); 
                             }else{
                                 errorCount++;
-                                putMessage("NOT closeBlock.  Error at position " + tokenIndex + ".");
+                                putMessage("NOT closeBlock.  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
-            case "digit":   putMessage("Expecting a digit");
-                            if (currentToken=="0" || currentToken=="1" || currentToken=="2" || 
-                                currentToken=="3" || currentToken=="4" || currentToken=="5" || 
-                                currentToken=="6" || currentToken=="7" || currentToken=="8" || 
-                                currentToken=="9")
-                            {
-                                putMessage("Got a digit!");
-                            }
-                            else
-                            {
+            case "EOF":
+                            putMessage("Expecting EOF");
+                            if(currentToken.kind == "EOF"){
+                               putMessage("Got EOF!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT a digit.  Error at position " + tokenIndex + ".");
+                                putMessage("NOT EOF  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
-            case "op":      putMessage("Expecting an operator");
-                            if (currentToken=="+" || currentToken=="-")
-                            {
-                                putMessage("Got an operator!");
-                            }
-                            else
-                            {
+            case "identifier":
+                            putMessage("Expecting an identifier");
+                            if(currentToken.kind == "identifier"){
+                               putMessage("Got an identifier!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT an operator.  Error at position " + tokenIndex + ".");
+                                putMessage("NOT identifier  Error at position " + tokenIndex + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + ".");
@@ -89,7 +126,7 @@
     }
 
     function getNextToken() {
-        var thisToken = EOF;    // Let's assume that we're at the EOF.
+        var thisToken = "";    // Let's assume that we're not at the EOF.
         if (tokenIndex < tokens.length)
         {
             // If we're not at EOF, then return the next token in the stream and advance the index.
