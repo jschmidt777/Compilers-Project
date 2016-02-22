@@ -114,6 +114,7 @@
                     parseIntExpr();
             break;
             case "openQuotation":
+                    matchAndConsume("openQuotation");
                     parseStringExpr();
             break;
             case "identifier":
@@ -141,6 +142,23 @@
             //go back up the traversal
             //and reinitialize at statementList
         }
+    }
+
+    function parseStringExpr(){  
+        if (currentToken.kind == "stringChar"){
+            consumeStringChar();
+        }else{
+            matchAndConsume("closeQuotation");
+            parseStatementList();
+            //could not be the only statement:
+            //go back up the traversal
+            //and reinitialize at statementList
+        }
+    }
+
+    function consumeStringChar(){
+        matchAndConsume("stringChar"); //Called recursively with parseStringExpr
+        parseStringExpr();
     }
 
     function matchAndConsume(expectedKind) {
@@ -227,6 +245,36 @@
                                 putMessage("NOT a digit. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
+            case "openQuotation":
+                            putMessage("Expecting an openQuotation");
+                            if(currentToken.kind == "openQuotation"){
+                               putMessage("Got an openQuotation!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT an openQuotation. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;
+            case "closeQuotation":
+                            putMessage("Expecting a closeQuotation");
+                            if(currentToken.kind == "closeQuotation"){
+                               putMessage("Got a closeQuotation!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a closeQuotation. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;
+            case "stringChar":
+                            putMessage("Expecting a stringChar");
+                            if(currentToken.kind == "stringChar"){
+                               putMessage("Got a stringChar!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a stringChar. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;                
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
                             break;			
         }

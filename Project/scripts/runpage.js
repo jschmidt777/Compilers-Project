@@ -35,9 +35,11 @@
 
         parse();
 
+        //tokenStream = 0;
+
         buttonClicksCount++;
 
-        
+        //TODO: Clear token array
         // . . . and parse!
         // TODO: Get parse up and running after lexer is solid.
         
