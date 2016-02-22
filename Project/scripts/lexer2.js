@@ -14,7 +14,8 @@
 
         // Definitions for kinds of tokens so they can be compared 
         // with the src code, which will then be added to the token stream. 
-        var keyword = /(while|if|print|int|string|boolean|false|true)/;
+        var keyword = /(while|if|print|int|string|boolean)/;
+        var boolval = /(false|true)/;
         var characterList = /("[a-z ]*")/; //May not need this
         var alpha = /([a-z])/; 
         var digit = /(\d)/;
@@ -70,6 +71,8 @@
                 tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)}); //not very efficient, though it does the job
             }else if(keyword.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);
+            }else if(boolval.test(currentLexeme.frag) && !insideString){
+                createToken(currentLexeme.frag, "boolval", currentLexeme.lineNum);
             }else if (alpha.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "identifier", currentLexeme.lineNum);
             }else if (alpha.test(currentLexeme.frag) && insideString){                                        

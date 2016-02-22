@@ -6,7 +6,7 @@
 //See grammar.pdf on labouseur.com under "Compilers" to see the order of traversal in more detail.
 
 //TODO: Verbose functionality
-    //Use linenum for this
+    //Elvish verbose output? (use a plugin?)
 
 
  function parse() {
@@ -71,12 +71,10 @@
                 case "print":
                         parsePrintStatement();
                 break;
+                //we're going to the same place
+                //whether we get int, string, or boolean
                 case "int":
-                        parseVarDecl();
-                break;
                 case "string":
-                        parseVarDecl();
-                break;
                 case "boolean":
                         parseVarDecl();
                 break;
@@ -93,12 +91,63 @@
         //could change this to take a parameter to make it more efficient
         matchAndConsume("type");
         matchAndConsume("identifier");
+        parseStatementList();
+        //could not be the only statement:
+        //go back up the traversal
+        //and reinitialize at statementList
+    }
+
+    function parseAssignmentStatement(){
+        matchAndConsume("identifier");
+        matchAndConsume("assign");
+        parseExpr();
+        parseStatementList();
+        //could not be the only statement:
+        //go back up the traversal
+        //and reinitialize at statementList
+    }
+
+    function parseExpr(){
+        var expressionLexeme = currentToken.kind;
+        switch(expressionLexeme){
+            case "digit":
+                    parseIntExpr();
+            break;
+            case "openQuotation":
+                    parseStringExpr();
+            break;
+            case "identifier":
+                    matchAndConsume("identifier");
+            break;
+            case "openParen":
+            case "boolval":
+                    parseBooleanExpr();
+            break;
+            default:
+                    putMessage("You broke me!");
+            break;
+        }
+    }
+
+    function parseIntExpr(){
+        matchAndConsume("digit");
+        if(currentToken.kind == "add"){
+            matchAndConsume("add");
+            parseExpr();
+            parseStatementList();
+        }else{
+            parseStatementList();
+            //could not be the only statement:
+            //go back up the traversal
+            //and reinitialize at statementList
+        }
     }
 
     function matchAndConsume(expectedKind) {
         // Validate that we have the expected token kind and get the next token.
 
         //TODO: Make a function for what I do in the cases, and use this to check if I do verbose output
+        //Maybe go back if I get an error?
         switch(expectedKind) {
             case "openBlock":
                             putMessage("Expecting an openBlock");
@@ -106,7 +155,7 @@
                                putMessage("Got an openBlock!"); 
                             }else{
                                 errorCount++;
-                                putMessage("NOT an openBlock.  Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT an openBlock. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "closeBlock":
@@ -115,7 +164,7 @@
                                putMessage("Got an closeBlock!"); 
                             }else{
                                 errorCount++;
-                                putMessage("NOT closeBlock.  Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT a closeBlock. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "EOF":
@@ -125,7 +174,7 @@
                             }else{
                                 //create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT EOF  Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT EOF. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "identifier":
@@ -135,7 +184,7 @@
                             }else{
                                 //TODO:create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT an identifier  Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT an identifier. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             case "type":
@@ -145,7 +194,37 @@
                             }else{
                                 //create token EOF and put a nonfatal warning in
                                 errorCount++;
-                                putMessage("NOT a type declaration Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                                putMessage("NOT a type declaration. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;
+            case "assign":
+                            putMessage("Expecting an assign operator");
+                            if(currentToken.kind == "assign"){
+                               putMessage("Got an assign operator!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT an assign operator. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;
+            case "add":
+                            putMessage("Expecting an add operator");
+                            if(currentToken.kind == "add"){
+                               putMessage("Got an add operator!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT an add operator. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;
+            case "digit":
+                            putMessage("Expecting a digit");
+                            if(currentToken.kind == "digit"){
+                               putMessage("Got a digit!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a digit. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
                             }
                             break;
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
