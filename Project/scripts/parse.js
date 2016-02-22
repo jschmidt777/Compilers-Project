@@ -156,6 +156,20 @@
         }
     }
 
+    function parseBooleanExpr(){
+        if(currentToken.kind == "openParen"){
+            matchAndConsume("openParen");
+            parseExpr();
+            matchAndConsume("testEquality" || "testInEquality");
+            parseExpr();
+            matchAndConsume("closeParen");
+            parseStatementList();
+        }else if (currentToken.kind == "boolval"){
+            matchAndConsume("boolval");
+            parseStatementList();
+        }
+    }
+
     function consumeStringChar(){
         matchAndConsume("stringChar"); //Called recursively with parseStringExpr
         parseStringExpr();
