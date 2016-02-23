@@ -26,7 +26,7 @@
         // A program production can only produce a block, so parse the block production.
         parseBlock();
         matchAndConsume("EOF");
-        //TODO: have a check here to execute parseBlock again if theres more tokens
+        //TODO: have a check here to execute parseBlock again if there are more tokens
     }
 
     function parseBlock() {
@@ -85,6 +85,32 @@
             // must be an identifier, which means an assignment statement
             parseAssignmentStatement();
         }
+    }
+
+    function parseWhileStatement(){
+        matchAndConsume("while");
+        parseBooleanExpr();
+        //would think I need a parseBlock() here right?
+        //since parseStatementList() gets called after the boolExpr
+        //I actually don't need it
+        parseStatementList();
+    }
+
+    function parseIfStatement(){
+        matchAndConsume("if");
+        parseBooleanExpr();
+        //would think I need a parseBlock() here right?
+        //since parseStatementList() gets called after the boolExpr
+        //I actually don't need it
+        parseStatementList();
+    }
+
+    function parsePrintStatement(){
+        matchAndConsume("print");
+        matchAndConsume("openParen");
+        parseExpr();
+        matchAndConsume("closeParen");
+        parseStatementList();
     }
 
     function parseVarDecl(){
@@ -342,7 +368,37 @@
                                 errorCount++;
                                 putMessage("NOT a closeParen. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
                             }
-                            break;                   
+                            break;      
+            case "while":
+                            putMessage("Expecting a while keyword");
+                            if(currentToken.lexeme == "while"){
+                               putMessage("Got a while keyword!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a while keyword. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;  
+            case "if":
+                            putMessage("Expecting a if keyword");
+                            if(currentToken.lexeme == "if"){
+                               putMessage("Got a if keyword!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a if keyword. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break; 
+            case "print":
+                            putMessage("Expecting a print keyword");
+                            if(currentToken.lexeme == "print"){
+                               putMessage("Got a print keyword!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a print keyword. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;                     
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
                             break;			
         }
