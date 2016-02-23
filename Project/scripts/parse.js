@@ -160,7 +160,11 @@
         if(currentToken.kind == "openParen"){
             matchAndConsume("openParen");
             parseExpr();
-            matchAndConsume("testEquality" || "testInEquality");
+            if (currentToken.kind == "testEquality"){
+                matchAndConsume("testEquality");
+            }else if (currentToken.kind == "testInEquality"){
+                matchAndConsume("testInEquality");
+            }
             parseExpr();
             matchAndConsume("closeParen");
             parseStatementList();
@@ -288,7 +292,57 @@
                                 errorCount++;
                                 putMessage("NOT a stringChar. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
                             }
-                            break;                
+                            break; 
+            case "boolval":
+                            putMessage("Expecting a boolval");
+                            if(currentToken.kind == "boolval"){
+                               putMessage("Got a boolval!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a boolval. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;    
+            case "testEquality":
+                            putMessage("Expecting a testEquality operator");
+                            if(currentToken.kind == "testEquality"){
+                               putMessage("Got a testEquality operator!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a testEquality. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;  
+            case "testInEquality":
+                            putMessage("Expecting a testInEquality operator");
+                            if(currentToken.kind == "testInEquality"){
+                               putMessage("Got a testInEquality operator!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a testInEquality. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;   
+            case "openParen":
+                            putMessage("Expecting an openParen");
+                            if(currentToken.kind == "openParen"){
+                               putMessage("Got an openParen!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT an openParen. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;   
+            case "closeParen":
+                            putMessage("Expecting a closeParen");
+                            if(currentToken.kind == "closeParen"){
+                               putMessage("Got a closeParen!"); 
+                            }else{
+                                //create token EOF and put a nonfatal warning in
+                                errorCount++;
+                                putMessage("NOT a closeParen. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                            }
+                            break;                   
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
                             break;			
         }
