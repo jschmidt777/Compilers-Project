@@ -25,7 +25,15 @@
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
         parseBlock();
-        matchAndConsume("EOF");
+        if (currentToken.kind != "EOF"){
+            var lastCloseBlock = tokens[tokenIndex-1]; 
+            createToken("$", "EOF", lastCloseBlock.lineNum);
+            putMessage("Warning, EOF token not found, added on line " + lastCloseBlock.lineNum);
+        }else{
+            matchAndConsume("EOF");
+        }   
+        
+
         //TODO: have a check here to execute parseBlock again if there are more tokens
     }
 
@@ -35,7 +43,7 @@
         // The only thing that can be in a block is a statementlist
         // Though statementlist is more complex
         matchAndConsume("closeBlock");
-        
+        parseStatementList();
         // Look ahead 1 char (which is now in currentToken because matchAndConsume 
         // consumes another one) and see which E production to follow.
         /*if (currentToken != EOF) {
@@ -212,13 +220,14 @@
         //Maybe go back if I get an error?
         switch(expectedKind) {
             case "openBlock":
-                            putMessage("Expecting an openBlock");
+                            checkExpectedKind(expectedKind);
+                            /*putMessage("Expecting an openBlock");
                             if(currentToken.kind == "openBlock"){
                                putMessage("Got an openBlock!"); 
                             }else{
                                 errorCount++;
                                 putMessage("NOT an openBlock. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            }*/
                             break;
             case "closeBlock":
                             putMessage("Expecting a closeBlock");
@@ -251,7 +260,7 @@
                             break;
             case "type":
                             putMessage("Expecting a type declaration");
-                            if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean" ){
+                            if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean"){
                                putMessage("Got a type declaration!"); 
                             }else{
                                 //create token EOF and put a nonfatal warning in
@@ -407,13 +416,31 @@
         currentToken = getNextToken();
     }
 
+    var verboseModeSet = true;
+    //TODO: make this change if verbose mode is checked or not
+    var isErrorParse = false;
+
+    function checkExpectedKind(expectedKind){
+        if(verboseModeSet){
+            putMessage("Expecting a(n) " + expectedKind);
+            if(currentToken.kind == expectedKind){
+                putMessage("Got a(n) "+ expectedKind + "!"); 
+            }else{
+                errorCount++;
+                putMessage("NOT a(n) " + expectedKind + "Error at position " + tokenIndex + " Line:" + 
+                            currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+            }
+        }else{
+            //Do the check, but don't print to the output, and if there's an error, increment error and print the error statment(?)
+        }
+
+    }
+
     function getNextToken() {
         var thisToken = "";    // Let's assume that we're not at the EOF.
         if (tokenIndex < tokens.length)
         {
-            // If we're not at EOF, then return the next token in the stream and advance the index.
             thisToken = tokens[tokenIndex];
-            //putMessage("Current token:" + thisToken);
             tokenIndex++;
         }
         return thisToken;
