@@ -8,6 +8,8 @@
 //TODO: Verbose functionality
     //Elvish verbose output? (use a plugin?)
 
+    var programCounter = 1;
+
 
  function parse() {
         putMessage("\n" + "------------------------");
@@ -19,22 +21,35 @@
         // A valid parse derives the program production, so begin there.
         parseProgram();
         // Report the results.
-        putMessage("Parsing found " + errorCount + " error(s).");        
+        putMessage("Parsing found " + errorCount + " error(s). For program " + programCounter + ".");  
+        programCounter++; 
+
+    /*var lookAhead = tokenIndex[tokenIndex + 1];
+        if (lookAhead.kind == "openBlock"){
+            parseProgram();
+        }else{
+            
+        }     */
     }
     
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
         parseBlock();
-        if (currentToken.kind != "EOF"){
+        var lookAhead = tokenIndex[tokenIndex + 2];
+        if (currentToken.kind != "EOF" && lookAhead.kind != "openBlock"){
             var lastCloseBlock = tokens[tokenIndex-1]; 
+            //this is the last closblock in the ENTIRE source code file.
             createToken("$", "EOF", lastCloseBlock.lineNum);
             putMessage("Warning, EOF token not found, added on line " + lastCloseBlock.lineNum);
         }else{
             matchAndConsume("EOF");
-        }   
-        
+        }  
 
-        //TODO: have a check here to execute parseBlock again if there are more tokens
+        if (lookAhead.kind == "openBlock"){
+            parseBlock();
+        }else{
+            
+        }  
     }
 
     function parseBlock() {
@@ -44,6 +59,7 @@
         // Though statementlist is more complex
         matchAndConsume("closeBlock");
         parseStatementList();
+
         // Look ahead 1 char (which is now in currentToken because matchAndConsume 
         // consumes another one) and see which E production to follow.
         /*if (currentToken != EOF) {
@@ -221,193 +237,62 @@
         switch(expectedKind) {
             case "openBlock":
                             checkExpectedKind(expectedKind);
-                            /*putMessage("Expecting an openBlock");
-                            if(currentToken.kind == "openBlock"){
-                               putMessage("Got an openBlock!"); 
-                            }else{
-                                errorCount++;
-                                putMessage("NOT an openBlock. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
-                            }*/
                             break;
             case "closeBlock":
-                            putMessage("Expecting a closeBlock");
-                            if(currentToken.kind == "closeBlock"){
-                               putMessage("Got an closeBlock!"); 
-                            }else{
-                                errorCount++;
-                                putMessage("NOT a closeBlock. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
+                            
             case "EOF":
-                            putMessage("Expecting EOF");
-                            if(currentToken.kind == "EOF"){
-                               putMessage("Got EOF!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT EOF. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "identifier":
-                            putMessage("Expecting an identifier");
-                            if(currentToken.kind == "identifier"){
-                               putMessage("Got an identifier!"); 
-                            }else{
-                                //TODO:create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT an identifier. Error at position " + tokenIndex + " Line:" + currentToken.lineNum + ". Got a(n) " + currentToken.kind + ".");
-                            }
+                           checkExpectedKind(expectedKind);
                             break;
             case "type":
-                            putMessage("Expecting a type declaration");
-                            if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean"){
-                               putMessage("Got a type declaration!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a type declaration. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "assign":
-                            putMessage("Expecting an assign operator");
-                            if(currentToken.kind == "assign"){
-                               putMessage("Got an assign operator!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT an assign operator. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "add":
-                            putMessage("Expecting an add operator");
-                            if(currentToken.kind == "add"){
-                               putMessage("Got an add operator!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT an add operator. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "digit":
-                            putMessage("Expecting a digit");
-                            if(currentToken.kind == "digit"){
-                               putMessage("Got a digit!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a digit. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "openQuotation":
-                            putMessage("Expecting an openQuotation");
-                            if(currentToken.kind == "openQuotation"){
-                               putMessage("Got an openQuotation!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT an openQuotation. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "closeQuotation":
-                            putMessage("Expecting a closeQuotation");
-                            if(currentToken.kind == "closeQuotation"){
-                               putMessage("Got a closeQuotation!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a closeQuotation. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break;
             case "stringChar":
-                            putMessage("Expecting a stringChar");
-                            if(currentToken.kind == "stringChar"){
-                               putMessage("Got a stringChar!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a stringChar. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break; 
+                            checkExpectedKind(expectedKind);
+                            break;
             case "boolval":
-                            putMessage("Expecting a boolval");
-                            if(currentToken.kind == "boolval"){
-                               putMessage("Got a boolval!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a boolval. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;    
+                            checkExpectedKind(expectedKind);
+                            break;  
             case "testEquality":
-                            putMessage("Expecting a testEquality operator");
-                            if(currentToken.kind == "testEquality"){
-                               putMessage("Got a testEquality operator!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a testEquality. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;  
+                            checkExpectedKind(expectedKind);
+                            break;
             case "testInEquality":
-                            putMessage("Expecting a testInEquality operator");
-                            if(currentToken.kind == "testInEquality"){
-                               putMessage("Got a testInEquality operator!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a testInEquality. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;   
-            case "openParen":
-                            putMessage("Expecting an openParen");
-                            if(currentToken.kind == "openParen"){
-                               putMessage("Got an openParen!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT an openParen. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;   
-            case "closeParen":
-                            putMessage("Expecting a closeParen");
-                            if(currentToken.kind == "closeParen"){
-                               putMessage("Got a closeParen!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a closeParen. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;      
-            case "while":
-                            putMessage("Expecting a while keyword");
-                            if(currentToken.lexeme == "while"){
-                               putMessage("Got a while keyword!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a while keyword. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;  
-            case "if":
-                            putMessage("Expecting a if keyword");
-                            if(currentToken.lexeme == "if"){
-                               putMessage("Got a if keyword!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a if keyword. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
+                            checkExpectedKind(expectedKind);
                             break; 
+            case "openParen":
+                            checkExpectedKind(expectedKind);
+                            break;
+            case "closeParen":
+                            checkExpectedKind(expectedKind);
+                            break;     
+            case "while":
+                            checkExpectedKind(expectedKind);
+                            break;
+            case "if":
+                            checkExpectedKind(expectedKind);
+                            break;
             case "print":
-                            putMessage("Expecting a print keyword");
-                            if(currentToken.lexeme == "print"){
-                               putMessage("Got a print keyword!"); 
-                            }else{
-                                //create token EOF and put a nonfatal warning in
-                                errorCount++;
-                                putMessage("NOT a print keyword. Error at position " + tokenIndex + " Line:" + currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-                            }
-                            break;                     
+                            checkExpectedKind(expectedKind);
+                            break;                    
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
                             break;			
         }
@@ -423,11 +308,11 @@
     function checkExpectedKind(expectedKind){
         if(verboseModeSet){
             putMessage("Expecting a(n) " + expectedKind);
-            if(currentToken.kind == expectedKind){
+            if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
                 putMessage("Got a(n) "+ expectedKind + "!"); 
             }else{
                 errorCount++;
-                putMessage("NOT a(n) " + expectedKind + "Error at position " + tokenIndex + " Line:" + 
+                putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
                             currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
             }
         }else{
