@@ -31,7 +31,10 @@
         putMessage("Compilation Started");
         // Grab the tokens from the lexer . . .
         tokens = lex();
+        putMessage("\n" + "------------------------");
         putMessage("Lex returned [" + tokens + "]");
+        putMessage("------------------------");
+        putMessage("\n");
 
         parse();
 

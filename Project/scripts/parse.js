@@ -8,8 +8,10 @@
 //TODO: Verbose functionality
     //Elvish verbose output? (use a plugin?)
 
-    var programCounter = 1;
-
+    /*Parse Globals*/
+    var verboseModeSet = true;
+    //TODO: make this change if verbose mode is checked or not
+    var isErrorParse = false;
 
  function parse() {
         putMessage("\n" + "------------------------");
@@ -21,8 +23,9 @@
         // A valid parse derives the program production, so begin there.
         parseProgram();
         // Report the results.
-        putMessage("Parsing found " + errorCount + " error(s). For program " + programCounter + ".");  
-        programCounter++; 
+        putMessage("\n" + "------------------------");
+        putMessage("Parse Completed.");
+        putMessage("Parse found " + errorCount + " error(s).");  
 
     /*var lookAhead = tokenIndex[tokenIndex + 1];
         if (lookAhead.kind == "openBlock"){
@@ -35,23 +38,33 @@
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
         parseBlock();
-        var lookAhead = tokenIndex[tokenIndex + 2];
-        if (currentToken.kind != "EOF" && lookAhead.kind != "openBlock"){
+        checkEOF();
+    }
+
+    function checkEOF(){
+        //If there are more tokens, then there must be another program, so go to parseBlock again
+        /*if (tokenIndex != tokens.length){
+            matchAndConsume("EOF");
+            parseProgram();
+        }else*/
+
+        if (tokenIndex != tokens.length){
+            alert("here1");
+            matchAndConsume("EOF");
+            parseProgram();
+        }else if (currentToken.kind == "EOF"){
+            alert("here2");
+            matchAndConsume("EOF");
+        }else if (tokenIndex == tokens.length ){
+            alert("here3");
             var lastCloseBlock = tokens[tokenIndex-1]; 
             //this is the last closblock in the ENTIRE source code file.
             createToken("$", "EOF", lastCloseBlock.lineNum);
             putMessage("Warning, EOF token not found, added on line " + lastCloseBlock.lineNum);
-        }else{
-            matchAndConsume("EOF");
-        }  
+        }
 
-        if (lookAhead.kind == "openBlock"){
-            parseBlock();
-        }else{
-            
-        }  
+
     }
-
     function parseBlock() {
         matchAndConsume("openBlock");
         parseStatementList();
@@ -240,8 +253,7 @@
                             break;
             case "closeBlock":
                             checkExpectedKind(expectedKind);
-                            break;
-                            
+                            break;   
             case "EOF":
                             checkExpectedKind(expectedKind);
                             break;
@@ -301,22 +313,26 @@
         currentToken = getNextToken();
     }
 
-    var verboseModeSet = true;
-    //TODO: make this change if verbose mode is checked or not
-    var isErrorParse = false;
-
     function checkExpectedKind(expectedKind){
         if(verboseModeSet){
             putMessage("Expecting a(n) " + expectedKind);
-            if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
+            if (expectedKind == "type"){
+                if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean" ){
+                    putMessage("Got a(n) "+ expectedKind + "!"); 
+                }else{
+                errorCount++;
+                putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
+                             currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                }
+            }else if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
                 putMessage("Got a(n) "+ expectedKind + "!"); 
             }else{
                 errorCount++;
                 putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
-                            currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
-            }
+                             currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                }
         }else{
-            //Do the check, but don't print to the output, and if there's an error, increment error and print the error statment(?)
+            //Do the check, but don't print to the output, and if there's an error, increment error and print the error statment
         }
 
     }
