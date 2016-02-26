@@ -14,9 +14,9 @@
     var programCount = 1;
 
  function parse() {
-        putMessage("\n" + "------------------------------------------");
+        putMessage("\n" + "-------------------------------------------");
         putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
-        putMessage("------------------------------------------");
+        putMessage("-------------------------------------------");
         putMessage("\n");
         // Grab the next token.
         currentToken = getNextToken();
@@ -44,25 +44,7 @@
             putMessage("\n");
         }
         parseBlock();
-        checkEOF();
-    }
-
-    function checkEOF(){
-        if (tokenIndex == tokens.length && currentToken != "EOF"){
-            var lastCloseBlock = tokens[tokenIndex-1]; 
-            //this is the last closblock in the ENTIRE source code file.
-            createToken("$", "EOF", lastCloseBlock.lineNum);
-            putMessage("Warning, EOF token not found, added on line " + lastCloseBlock.lineNum);
-            warningCount++;
-        }else if (tokenIndex+1 < tokens.length){
-            matchAndConsume("EOF");
-            programCount++;
-            parseProgram();
-        }else if (currentToken.kind == "EOF" ){
-            matchAndConsume("EOF");
-        }else{
-            matchAndConsume("EOF");
-        }
+        matchAndConsume("EOF");
     }
 
     function parseBlock() {
@@ -228,7 +210,17 @@
                             checkExpectedKind(expectedKind);
                             break;   
             case "EOF":
-                            checkExpectedKind(expectedKind);
+                            if(currentToken.kind == "closeBlock"){
+                                checkExpectedKind(expectedKind);       //Seems odd, but it makes sense since it would be checking for the wrong kind otherwise
+                            }else if (tokenIndex == tokens.length && currentToken.kind != expectedKind){ 
+                                var lastCloseBlock = tokens[tokenIndex-1];
+                                createToken("$", "EOF", lastCloseBlock.lineNum);
+                                putMessage("Warning, EOF token not found, added on line " + lastCloseBlock.lineNum);
+                                warningCount++;
+                            }else{
+                                checkExpectedKind(expectedKind);
+                            }
+                            
                             break;
             case "identifier":
                            checkExpectedKind(expectedKind);
@@ -288,15 +280,23 @@
     }
 
     function checkExpectedKind(expectedKind){
+        var lineNum = currentToken.lineNum;
+        var previousToken = tokens[tokenIndex-1].lineNum;
+        if(lineNum == undefined){
+            lineNum = previousToken;
+        }else{
+            //Keep line num as it is
+            //This is only for EOF, since it will only get a line number of undefined otherwise.
+        }
         if(verboseModeSet){
             putMessage("Expecting a(n) " + expectedKind);
             if (expectedKind == "type"){
-                if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean" ){
+                if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean" ){  //Didn't want to change lex to accomidate for types, so I did it here.
                     putMessage("Got a(n) "+ expectedKind + "!"); 
                 }else{
                 errorCount++;
                 putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
-                             currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                             lineNum +  ". Got a(n) " + currentToken.kind + ".");
                 isParseError = true;
                 }
             }else if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
@@ -304,7 +304,7 @@
             }else{
                 errorCount++;
                 putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
-                             currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                             lineNum +  ". Got a(n) " + currentToken.kind + ".");
                 isParseError = true;
                 }
         }else{
@@ -314,7 +314,7 @@
                 }else{
                 errorCount++;
                 putMessage("Error at position " + tokenIndex + " Line:" + 
-                             currentToken.lineNum +  " Expected a(n) " + expectedKind + ", but got a(n) " + currentToken.kind + ".");
+                             lineNum +  " Expected a(n) " + expectedKind + ", but got a(n) " + currentToken.kind + ".");
                 isParseError = true;
                 }
             }else if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
@@ -322,7 +322,7 @@
             }else{
                 errorCount++;
                 putMessage("Error at position " + tokenIndex + " Line:" + 
-                             currentToken.lineNum +  ". Expected a(n) " + expectedKind + ", but got a(n) " + currentToken.kind + ".");
+                             lineNum +  ". Expected a(n) " + expectedKind + ", but got a(n) " + currentToken.kind + ".");
                 isParseError = true;
                 }
         }
