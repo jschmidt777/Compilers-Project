@@ -7,10 +7,11 @@
 </head>
 <body onload="init();">
     <h1><em> Joseph Schmidt's </em>Compiler Project</h1>
-<!--
+
     <p>
-        . . . <em>a simple parser for a simple grammar</em>:
+        <em>Note: Please reload the page for each compilation.</em>
     </p>
+    <!--
     <pre>
 G ::== E
 E ::== D O E | D
@@ -26,9 +27,9 @@ O ::== + | -
         <textarea id="taSourceCode" cols="32" rows="18"></textarea>
         <br>
         <input type="button" id="btnCompile" value="Compile" onclick="btnCompile_click();"/>
-        <input type="radio" name="veboseMode" value="Parse in Verbose Mode"> Parse in Verbose Mode
+        <input type="radio" id="radioVerbose" name="veboseMode" value="Parse in Verbose Mode" unchecked> Parse in Verbose Mode
         <br>
-        <textarea id="taOutput" cols="32" rows="18"></textarea>
+        <textarea id="taOutput" cols="90" rows="18"></textarea>
     </div>
     <!-- Footer -->
     <p>

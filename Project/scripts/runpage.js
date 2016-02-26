@@ -15,10 +15,10 @@
         currentToken = ' ';
         errorCount = 0;    
 
-        if (buttonClicksCount > 0){       
+        /*if (buttonClicksCount > 0){       
            window.location.reload(true); 
             //putMessage("Cannot compile multiple times yet."); //TODO: Fix this so the user can compile multiple times with a sticky input
-        }    
+        }    */
          
     }
     
@@ -28,6 +28,7 @@
         // Note the <input> element's event handler: onclick="btnCompile_click();
        
         init();
+        checkVerboseMode();
         putMessage("Compilation Started");
         // Grab the tokens from the lexer . . .
         tokens = lex();
@@ -40,20 +41,21 @@
 
         //tokenStream = 0;
 
-        buttonClicksCount++;
+        //buttonClicksCount++;
 
         //TODO: Clear token array
         // . . . and parse!
-        // TODO: Get parse up and running after lexer is solid.
-        
-        
-        
+  
     }
 
     function putMessage(msg) {
         document.getElementById("taOutput").value += msg + "\n";
     }
     
+    function checkVerboseMode(){
+        var thisSet = document.getElementById("radioVerbose").checked;
+        verboseModeSet = thisSet;
+    }
     
    
     

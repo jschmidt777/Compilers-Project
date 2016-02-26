@@ -1,92 +1,86 @@
 /*parse.js*/ 
 
-//Uses the globals on runpage.js
-//Note: the parse functions go in order of traversal
+//Note: the parse functions are written in order of their production
 //so it first looks to see if it's a program, then a block, then a statement... etc.
-//See grammar.pdf on labouseur.com under "Compilers" to see the order of traversal in more detail.
+//See grammar.pdf on labouseur.com under "Compilers" to see the productions in more detail.
 
 //TODO: Verbose functionality
     //Elvish verbose output? (use a plugin?)
 
     /*Parse Globals*/
-    var verboseModeSet = true;
-    //TODO: make this change if verbose mode is checked or not
-    var isErrorParse = false;
+    var verboseModeSet = false;
+    var isParseError = false;
+    var warningCount = 0;
+    var programCount = 1;
 
  function parse() {
-        putMessage("\n" + "------------------------");
-        putMessage(" Parsing [" + tokens + "]");              
-        putMessage("------------------------");
+        putMessage("\n" + "------------------------------------------");
+        putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
+        putMessage("------------------------------------------");
         putMessage("\n");
         // Grab the next token.
         currentToken = getNextToken();
         // A valid parse derives the program production, so begin there.
         parseProgram();
         // Report the results.
-        putMessage("\n" + "------------------------");
-        putMessage("Parse Completed.");
-        putMessage("Parse found " + errorCount + " error(s).");  
-
-    /*var lookAhead = tokenIndex[tokenIndex + 1];
-        if (lookAhead.kind == "openBlock"){
-            parseProgram();
+        if(isParseError == false){
+            putMessage("Parse Successful!");
+            putMessage("Parse found " + errorCount + " error(s)."); 
+            putMessage("Parse found " + warningCount + " warning(s).");
         }else{
-            
-        }     */
+            putMessage("\n" + "------------------------");
+            putMessage("Parse Unsuccessful.");
+            putMessage("Parse found " + errorCount + " error(s)."); 
+            putMessage("Parse found " + warningCount + " warning(s).");  
+        } 
     }
     
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
+        if(!isParseError){
+            putMessage("\n" + "---------------------------");
+            putMessage( "Parsing program "+ programCount +".");
+            putMessage("---------------------------");
+            putMessage("\n");
+        }
         parseBlock();
         checkEOF();
     }
 
     function checkEOF(){
-        //If there are more tokens, then there must be another program, so go to parseBlock again
-        /*if (tokenIndex != tokens.length){
-            matchAndConsume("EOF");
-            parseProgram();
-        }else*/
-
-        if (tokenIndex != tokens.length){
-            alert("here1");
-            matchAndConsume("EOF");
-            parseProgram();
-        }else if (currentToken.kind == "EOF"){
-            alert("here2");
-            matchAndConsume("EOF");
-        }else if (tokenIndex == tokens.length ){
-            alert("here3");
+        if (tokenIndex == tokens.length && currentToken != "EOF"){
             var lastCloseBlock = tokens[tokenIndex-1]; 
             //this is the last closblock in the ENTIRE source code file.
             createToken("$", "EOF", lastCloseBlock.lineNum);
             putMessage("Warning, EOF token not found, added on line " + lastCloseBlock.lineNum);
+            warningCount++;
+        }else if (tokenIndex+1 < tokens.length){
+            matchAndConsume("EOF");
+            programCount++;
+            parseProgram();
+        }else if (currentToken.kind == "EOF" ){
+            matchAndConsume("EOF");
+        }else{
+            matchAndConsume("EOF");
         }
-
-
     }
+
     function parseBlock() {
         matchAndConsume("openBlock");
         parseStatementList();
         // The only thing that can be in a block is a statementlist
         // Though statementlist is more complex
         matchAndConsume("closeBlock");
-        parseStatementList();
 
-        // Look ahead 1 char (which is now in currentToken because matchAndConsume 
-        // consumes another one) and see which E production to follow.
-        /*if (currentToken != EOF) {
-            // We're not done, we expect to have another program
-            //parseBlock();
-        } else {
-            // There is nothing else in the token stream, 
-            putMessage("EOF reached");
-        }*/
     }
 
     function parseStatementList(){
         if(currentToken.kind == "keyword" || currentToken.kind == "identifier" || currentToken.kind == "openBlock"){
             parseStatement();
+            parseStatementList();
+            //could be more statements:
+            //go back up the traversal
+            //and reinitialize 
         }else{
             //Do nothing. Epsilon production.
         }
@@ -130,7 +124,7 @@
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
-        parseStatementList();
+        //Also, there's no block production for a while statement
     }
 
     function parseIfStatement(){
@@ -139,7 +133,7 @@
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
-        parseStatementList();
+        //Also, there's no block production for a if statement
     }
 
     function parsePrintStatement(){
@@ -147,27 +141,18 @@
         matchAndConsume("openParen");
         parseExpr();
         matchAndConsume("closeParen");
-        parseStatementList();
     }
 
     function parseVarDecl(){
         //could change this to take a parameter to make it more efficient
         matchAndConsume("type");
         matchAndConsume("identifier");
-        parseStatementList();
-        //could not be the only statement:
-        //go back up the traversal
-        //and reinitialize at statementList
     }
 
     function parseAssignmentStatement(){
         matchAndConsume("identifier");
         matchAndConsume("assign");
         parseExpr();
-        parseStatementList();
-        //could not be the only statement:
-        //go back up the traversal
-        //and reinitialize at statementList
     }
 
     function parseExpr(){
@@ -188,7 +173,7 @@
                     parseBooleanExpr();
             break;
             default:
-                    putMessage("You broke me!");
+                    //putMessage("You broke me!");
             break;
         }
     }
@@ -198,12 +183,8 @@
         if(currentToken.kind == "add"){
             matchAndConsume("add");
             parseExpr();
-            parseStatementList();
         }else{
-            parseStatementList();
-            //could not be the only statement:
-            //go back up the traversal
-            //and reinitialize at statementList
+           //Just for constistency. No epsilon production. 
         }
     }
 
@@ -212,10 +193,6 @@
             consumeStringChar();
         }else{
             matchAndConsume("closeQuotation");
-            parseStatementList();
-            //could not be the only statement:
-            //go back up the traversal
-            //and reinitialize at statementList
         }
     }
 
@@ -230,10 +207,8 @@
             }
             parseExpr();
             matchAndConsume("closeParen");
-            parseStatementList();
         }else if (currentToken.kind == "boolval"){
             matchAndConsume("boolval");
-            parseStatementList();
         }
     }
 
@@ -244,9 +219,7 @@
 
     function matchAndConsume(expectedKind) {
         // Validate that we have the expected token kind and get the next token.
-
-        //TODO: Make a function for what I do in the cases, and use this to check if I do verbose output
-        //Maybe go back if I get an error?
+        if(!isParseError){
         switch(expectedKind) {
             case "openBlock":
                             checkExpectedKind(expectedKind);
@@ -308,6 +281,7 @@
             default:        putMessage("Parse Error: Invalid Token Type at position " + tokenIndex + " Line:" + currentToken.lineNum + ".");
                             break;			
         }
+       }   
         // Consume another token, having just checked this one, because that 
         // will allow the code to see what's coming next... a sort of "look-ahead".
         currentToken = getNextToken();
@@ -323,6 +297,7 @@
                 errorCount++;
                 putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
                              currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                isParseError = true;
                 }
             }else if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
                 putMessage("Got a(n) "+ expectedKind + "!"); 
@@ -330,17 +305,33 @@
                 errorCount++;
                 putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
                              currentToken.lineNum +  ". Got a(n) " + currentToken.kind + ".");
+                isParseError = true;
                 }
         }else{
-            //Do the check, but don't print to the output, and if there's an error, increment error and print the error statment
+            if (expectedKind == "type"){
+                if(currentToken.lexeme == "int" || currentToken.lexeme == "string" || currentToken.lexeme == "boolean" ){
+                    //Great! keep on keeping on
+                }else{
+                errorCount++;
+                putMessage("Error at position " + tokenIndex + " Line:" + 
+                             currentToken.lineNum +  " Expected a(n) " + expectedKind + ", but got a(n) " + currentToken.kind + ".");
+                isParseError = true;
+                }
+            }else if(currentToken.kind == expectedKind || currentToken.lexeme == expectedKind){
+                //Great! keep on keeping on
+            }else{
+                errorCount++;
+                putMessage("Error at position " + tokenIndex + " Line:" + 
+                             currentToken.lineNum +  ". Expected a(n) " + expectedKind + ", but got a(n) " + currentToken.kind + ".");
+                isParseError = true;
+                }
         }
 
     }
 
     function getNextToken() {
         var thisToken = "";    // Let's assume that we're not at the EOF.
-        if (tokenIndex < tokens.length)
-        {
+        if (tokenIndex < tokens.length){
             thisToken = tokens[tokenIndex];
             tokenIndex++;
         }
