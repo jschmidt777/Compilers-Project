@@ -27,7 +27,7 @@
         //Split on any white space, deliminators, and even id, char, and digits. 
         //Basically, split on anything we may find interesting, since that will be tokenized.
         var splitOnVals = /(while|if|print|int|string|boolean|false|true|[a-z]|[0-9]|\"|\(|\)|{|}|\$|==|!=|=|\+|\s|)/;
-                            //Keywords                                     id/chars/digits              deliminators
+                            //Keywords                         boolval    id/chars/digits              deliminators
 
         //Array to go through the source code to split it into possible tokens. Pass 1.
         var sourceCodeArray = sourceCode.split(splitOnVals);
@@ -62,7 +62,6 @@
         //lexemesArr = lexemesArr.filter(function(lexeme){ return !tab.test(lexeme.frag)});
         var isError = false;                             
         var insideString = false;
-        //return lexemesArr;
         var lexArrLen= lexemesArr.length;
 
         for (i = 0; i < lexArrLen; i++){
@@ -149,6 +148,8 @@
         // should return a stream of tokens
         }
     } 
+
+    //Lex Constructors
 
     function lexemeStruct(){
         this.frag = "";

@@ -1,4 +1,5 @@
 // Global variables
+// Accessed in parser.js as well
     var tokens = "";
     var tokenIndex = 0;
     var currentToken = "";
@@ -9,24 +10,15 @@
     function init() {
         // Clear the message box.
         document.getElementById("taOutput").value = "";
-        // Set the initial values for our globals.
+        // Set the initial values for the globals.
         tokens = "";
         tokenIndex = 0;
         currentToken = ' ';
-        errorCount = 0;    
-
-        /*if (buttonClicksCount > 0){       
-           window.location.reload(true); 
-            //putMessage("Cannot compile multiple times yet."); //TODO: Fix this so the user can compile multiple times with a sticky input
-        }    */
+        errorCount = 0;   
          
     }
     
     function btnCompile_click() {        
-        // This is executed as a result of the user pressing the 
-        // "compile" button between the two text areas, above.  
-        // Note the <input> element's event handler: onclick="btnCompile_click();
-       
         init();
         checkVerboseMode();
         putMessage("Compilation Started");
@@ -38,13 +30,7 @@
         putMessage("\n");
 
         parse();
-
-        //tokenStream = 0;
-
-        //buttonClicksCount++;
-
-        //TODO: Clear token array
-        // . . . and parse!
+        //TODO: Clear token array and allow for multiple button clicks
   
     }
 

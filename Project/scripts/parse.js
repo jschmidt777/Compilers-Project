@@ -8,6 +8,7 @@
     //Elvish verbose output? (use a plugin?)
 
     /*Parse Globals*/
+    //Some are on runpage.js as well
     var verboseModeSet = false;
     var isParseError = false;
     var warningCount = 0;
@@ -25,12 +26,11 @@
         // Report the results.
         if(isParseError == false){
             putMessage("Parse Successful!");
-            putMessage("Parse found " + errorCount + " error(s)."); 
             putMessage("Parse found " + warningCount + " warning(s).");
         }else{
             putMessage("\n" + "------------------------");
             putMessage("Parse Unsuccessful.");
-            putMessage("Parse found " + errorCount + " error(s)."); 
+            putMessage("Parse found " + errorCount + " error(s)."); //There shouldn't be more than one, but I like having this in
             putMessage("Parse found " + warningCount + " warning(s).");  
         } 
     }
@@ -51,7 +51,6 @@
         matchAndConsume("openBlock");
         parseStatementList();
         // The only thing that can be in a block is a statementlist
-        // Though statementlist is more complex
         matchAndConsume("closeBlock");
 
     }
@@ -115,7 +114,7 @@
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
-        //Also, there's no block production for a if statement
+        //Also, there's no block production for an if statement
     }
 
     function parsePrintStatement(){
@@ -170,13 +169,6 @@
         }
     }
 
-    function parseStringExpr(){  
-        if (currentToken.kind == "stringChar"){
-            consumeStringChar();
-        }else{
-            matchAndConsume("closeQuotation");
-        }
-    }
 
     function parseBooleanExpr(){
         if(currentToken.kind == "openParen"){
@@ -194,8 +186,16 @@
         }
     }
 
+    function parseStringExpr(){  
+        if (currentToken.kind == "stringChar"){
+            consumeStringChar();
+        }else{
+            matchAndConsume("closeQuotation");
+        }
+    }
+
     function consumeStringChar(){
-        matchAndConsume("stringChar"); //Called recursively with parseStringExpr
+        matchAndConsume("stringChar"); 
         parseStringExpr();
     }
 
@@ -286,7 +286,7 @@
             lineNum = previousToken;
         }else{
             //Keep line num as it is
-            //This is only for EOF, since it will only get a line number of undefined otherwise.
+            //This is only for EOF, since it will get a line number of undefined otherwise.
         }
         if(verboseModeSet){
             putMessage("Expecting a(n) " + expectedKind);
@@ -330,7 +330,7 @@
     }
 
     function getNextToken() {
-        var thisToken = "";    // Let's assume that we're not at the EOF.
+        var thisToken = "";   
         if (tokenIndex < tokens.length){
             thisToken = tokens[tokenIndex];
             tokenIndex++;

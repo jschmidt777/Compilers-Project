@@ -1,10 +1,20 @@
+Joseph Schmidt  
+CMPT 432L- Compilers
+2/25/16
 
+The below eight test cases show that my lex/parse is robust enough to handle complex source code situations, while also so so in a pretty efficient manner. 
+These all work, though didn't for some time, and were used through out the process of building the parser (lex test cases were really just chars that aren't in our grammar, i.e. #,@,*). Further, I used these to test errors, just by deleting some part of the case to see how the parse reacted. There is some weird looking syntax, though that IS supposed to work in our grammar, and I believe the last test case is the only one that should throw an error. 
+While I have thrown MANY test cases at this thing, I believe these several test cases show at least a sample of this systems code coverage.
+
+
+Test_Case_0
 {{
 boolean a
 a = ( 4 != 5 )
 x = "hello"
 }}$
 
+Test_Case_1
 {
 	int x
 	x = 0
@@ -17,6 +27,7 @@ int x
 x = 0
 } $
 
+Test_Case_2
 {
 	int a
 	a = 1
@@ -30,6 +41,7 @@ x = 0
 	}
 } $
 
+Test_Case_3
 {
 	int x
 	x = 0
@@ -45,7 +57,7 @@ int x
 x = 0
 } $
 
-
+Test_Case_4
 {
 	int x
 	x = 0
@@ -65,8 +77,7 @@ x = 0
 } $
 
 
-
-
+Test_Case_5
 {
     int a
     a = 1
@@ -110,6 +121,7 @@ x = 0
     z = 5
 } $
 
+Test_Case_6
 (Courtesy to Dan Martino)
 {
 int x 
@@ -123,6 +135,7 @@ print("done")
 }
 }$
 
+Test_Case_7
 Correct
 {
   {
@@ -150,6 +163,8 @@ Correct
                         }
                         }
                         }
+                        
+Test_Case_8                       
 Incorrect                        
                         
 {
