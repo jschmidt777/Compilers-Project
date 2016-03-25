@@ -57,7 +57,7 @@
         
         //Get rid of white space in the lexemesArr, as well as any empty array elements
         lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)||!space.test(lexeme.isSpaceChar)});
-        lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)});
+        //lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)});
         lexemesArr = lexemesArr.filter(function(lexeme){ return !newline.test(lexeme.frag)});  //return what is not a newline
         //lexemesArr = lexemesArr.filter(function(lexeme){ return !tab.test(lexeme.frag)});
         var isError = false;                             

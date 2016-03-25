@@ -25,6 +25,7 @@
         parseProgram();
         // Report the results.
         if(isParseError == false){
+            putMessage("\n");
             putMessage("Parse Successful!");
             putMessage("Parse found " + warningCount + " warning(s).");
         }else{
@@ -45,6 +46,10 @@
         }
         parseBlock();
         matchAndConsume("EOF");
+        if (tokenIndex < tokens.length){
+            programCount++;
+            parseProgram();
+        } //Otherwise we're done
     }
 
     function parseBlock() {
@@ -295,7 +300,7 @@
                     putMessage("Got a(n) "+ expectedKind + "!"); 
                 }else{
                 errorCount++;
-                putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
+                putMessage("NOT a(n) " + expectedKind + ". Error at position " + tokenIndex + " Line:" + 
                              lineNum +  ". Got a(n) " + currentToken.kind + ".");
                 isParseError = true;
                 }
@@ -303,7 +308,7 @@
                 putMessage("Got a(n) "+ expectedKind + "!"); 
             }else{
                 errorCount++;
-                putMessage("NOT a(n) " + expectedKind + " .Error at position " + tokenIndex + " Line:" + 
+                putMessage("NOT a(n) " + expectedKind + ". Error at position " + tokenIndex + " Line:" + 
                              lineNum +  ". Got a(n) " + currentToken.kind + ".");
                 isParseError = true;
                 }
@@ -337,3 +342,6 @@
         }
         return thisToken;
     }
+
+
+//fuck

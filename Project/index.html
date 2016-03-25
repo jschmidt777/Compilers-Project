@@ -9,7 +9,7 @@
     <h1><em> Joseph Schmidt's </em>Compiler Project</h1>
 
     <p>
-        <em>Note: Please reload the page for each compilation.</em>
+        <em>Note: Please hit "Reload page" for a new compilation.</em>
     </p>
 
     <div>
@@ -19,6 +19,7 @@
         <textarea id="taSourceCode" cols="32" rows="18"></textarea>
         <br>
         <input type="button" id="btnCompile" value="Compile" onclick="btnCompile_click();"/>
+        <input type="reset" value="Reload page" onClick="window.location.reload()">
         <input type="radio" id="radioVerbose" name="veboseMode" value="Parse in Verbose Mode" unchecked> Parse in Verbose Mode
         <br>
         <textarea id="taOutput" cols="90" rows="18"></textarea>
