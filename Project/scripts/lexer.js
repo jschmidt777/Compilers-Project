@@ -58,7 +58,7 @@
         //Get rid of white space in the lexemesArr, as well as any empty array elements
         lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)||!space.test(lexeme.isSpaceChar)});
         //lexemesArr = lexemesArr.filter(function(lexeme){ return !whitespace.test(lexeme.frag)});
-        lexemesArr = lexemesArr.filter(function(lexeme){ return !newline.test(lexeme.frag)});  //return what is not a newline
+        //lexemesArr = lexemesArr.filter(function(lexeme){ return !newline.test(lexeme.frag)});  //return what is not a newline
         //lexemesArr = lexemesArr.filter(function(lexeme){ return !tab.test(lexeme.frag)});
         var isError = false;                             
         var insideString = false;
@@ -70,6 +70,8 @@
                 createToken("(space)", "stringChar", currentLexeme.lineNum); 
             }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && !insideString){
                 tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)}); //not very efficient, though it does the job
+            }else if(newline.test(currentLexeme.frag) && !insideString){
+                tokenStream.filter(function(lexeme){ return newline.test(lexeme.frag)}); //not very efficient, though it does the job
             }else if(keyword.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);
             }else if(boolval.test(currentLexeme.frag) && !insideString){

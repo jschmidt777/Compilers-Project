@@ -30,6 +30,11 @@
         putMessage("\n");
 
         parse();
+        if(isParseError){
+           document.getElementById("taCST").value = "Error found, CST not completed."
+        }else{
+            document.getElementById("taCST").value = cst.toString();
+        }
         //TODO: Clear token array and allow for multiple button clicks
   
     }

@@ -9,19 +9,27 @@
     <h1><em> Joseph Schmidt's </em>Compiler Project</h1>
 
     <p>
-        <em>Note: Please hit "Reload page" for a new compilation.</em>
+        <em>Note: Please hit "Reload page" to process a new compilation.</em>
     </p>
-
+    <br>
+<!--    <div>
+        <img style="float:right;" src="images/CompilerPhases.png" alt="Compiler Phases diagram" /> -->
+    </div> 
     <div>
-        <img style="float:right;" src="images/CompilerPhases.png" alt="Compiler Phases diagram" />
-    </div>    
-    <div>
-        <textarea id="taSourceCode" cols="32" rows="18"></textarea>
-        <br>
-        <input type="button" id="btnCompile" value="Compile" onclick="btnCompile_click();"/>
-        <input type="reset" value="Reload page" onClick="window.location.reload()">
-        <input type="radio" id="radioVerbose" name="veboseMode" value="Parse in Verbose Mode" unchecked> Parse in Verbose Mode
-        <br>
+        <!--TODO: make these textareas fixed, and just add scroll bars (?)-->
+        <table>
+            <tr>
+                <td>
+                    <textarea id="taSourceCode" cols="32" rows="18"></textarea>
+                <td>
+                    <textarea id="taCST" cols="32" rows="18">CST Output</textarea>
+            <tr>
+                <td>
+                    <br>
+                    <input type="button" id="btnCompile" value="Compile" onclick="btnCompile_click();"/>
+                    <input type="reset" value="Reload page" onClick="window.location.reload()">
+                    <input type="radio" id="radioVerbose" name="veboseMode" value="Parse in Verbose Mode" unchecked> Parse in verbose mode
+        </table>
         <textarea id="taOutput" cols="90" rows="18"></textarea>
     </div>
     <!-- Footer -->

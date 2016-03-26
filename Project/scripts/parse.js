@@ -22,6 +22,9 @@
         // Grab the next token.
         currentToken = getNextToken();
         // A valid parse derives the program production, so begin there.
+        // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
+        var cst = new Tree();
+        cst.addNode("Root", "branch");
         parseProgram();
         // Report the results.
         if(isParseError == false){
