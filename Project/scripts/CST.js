@@ -1,5 +1,5 @@
 //-----------------------------------------
-// Based on treeDemo.js by Alan G. Labouseur
+// Originally called treeDemo.js by Alan G. Labouseur
 // which is based on the 2009
 // work by Michael Ardizzone and Tim Smith.
 //-----------------------------------------

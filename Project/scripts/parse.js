@@ -14,6 +14,9 @@
     var warningCount = 0;
     var programCount = 1;
 
+    // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
+    var cst = new Tree();
+
  function parse() {
         putMessage("\n" + "-------------------------------------------");
         putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
@@ -22,8 +25,6 @@
         // Grab the next token.
         currentToken = getNextToken();
         // A valid parse derives the program production, so begin there.
-        // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
-        var cst = new Tree();
         cst.addNode("Root", "branch");
         parseProgram();
         // Report the results.
@@ -41,6 +42,7 @@
     
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
+        cst.addNode("Program", "branch");
         if(!isParseError){
             putMessage("\n" + "---------------------------");
             putMessage( "Parsing program "+ programCount +".");
@@ -48,24 +50,29 @@
             putMessage("\n");
         }
         parseBlock();
+        cst.endChildren();
         matchAndConsume("EOF");
         if (tokenIndex < tokens.length){
             programCount++;
             parseProgram();
         } //Otherwise we're done
+
     }
 
     function parseBlock() {
+        cst.addNode("Block", "branch");
         matchAndConsume("openBlock");
+        cst.endChildren();
         parseStatementList();
         // The only thing that can be in a block is a statementlist
         matchAndConsume("closeBlock");
-
     }
 
     function parseStatementList(){
+        cst.addNode("Statementlist", "branch");
         if(currentToken.kind == "keyword" || currentToken.kind == "identifier" || currentToken.kind == "openBlock"){
             parseStatement();
+            cst.endChildren();
             parseStatementList();
             //could be more statements:
             //go back up the traversal
@@ -76,6 +83,7 @@
     }
 
     function parseStatement(){
+        cst.addNode("Statement", "branch");
         if(currentToken.kind == "openBlock"){
             parseBlock();
             //go back to block since it must be an open block
@@ -105,11 +113,14 @@
             // must be an identifier, which means an assignment statement
             parseAssignmentStatement();
         }
+        cst.endChildren();
     }
 
     function parseWhileStatement(){
+        cst.addNode("WhileStatement", "branch");
         matchAndConsume("while");
         parseBooleanExpr();
+        cst.endChildren();
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
@@ -117,8 +128,10 @@
     }
 
     function parseIfStatement(){
+        cst.addNode("IfStatement", "branch");
         matchAndConsume("if");
         parseBooleanExpr();
+        cst.endChildren();
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
@@ -126,26 +139,33 @@
     }
 
     function parsePrintStatement(){
+        cst.addNode("PrintStatement", "branch");
         matchAndConsume("print");
         matchAndConsume("openParen");
         parseExpr();
         matchAndConsume("closeParen");
+        cst.endChildren();
     }
 
     function parseVarDecl(){
         //could change this to take a parameter to make it more efficient
+        cst.addNode("VarDecl" ,"branch");
         matchAndConsume("type");
         matchAndConsume("identifier");
+        cst.endChildren();
     }
 
     function parseAssignmentStatement(){
+        cst.addNode("AssignmentStatement" ,"branch");
         matchAndConsume("identifier");
         matchAndConsume("assign");
         parseExpr();
+        cst.endChildren();
     }
 
     function parseExpr(){
         var expressionLexeme = currentToken.kind;
+        cst.addNode("Expression", "branch");
         switch(expressionLexeme){
             case "digit":
                     parseIntExpr();
@@ -165,9 +185,11 @@
                     //putMessage("You broke me!");
             break;
         }
+        cst.endChildren();
     }
 
     function parseIntExpr(){
+        cst.addNode("IntExpr", "branch");
         matchAndConsume("digit");
         if(currentToken.kind == "add"){
             matchAndConsume("add");
@@ -175,10 +197,12 @@
         }else{
            //Just for constistency. No epsilon production. 
         }
+        cst.endChildren();
     }
 
 
     function parseBooleanExpr(){
+        cst.addNode("BooleanExpr" ,"branch");
         if(currentToken.kind == "openParen"){
             matchAndConsume("openParen");
             parseExpr();
@@ -192,31 +216,32 @@
         }else if (currentToken.kind == "boolval"){
             matchAndConsume("boolval");
         }
+        cst.endChildren();
     }
 
     function parseStringExpr(){  
+        cst.addNode("StringExpr" ,"branch");
         if (currentToken.kind == "stringChar"){
             consumeStringChar();
         }else{
             matchAndConsume("closeQuotation");
         }
+        cst.endChildren();
     }
 
     function consumeStringChar(){
+        cst.addNode("StringChar" ,"branch");
         matchAndConsume("stringChar"); 
         parseStringExpr();
+        cst.endChildren();
     }
 
     function matchAndConsume(expectedKind) {
         // Validate that we have the expected token kind and get the next token.
         if(!isParseError){
-        switch(expectedKind) {
-            case "openBlock":
-                            checkExpectedKind(expectedKind);
-                            break;
-            case "closeBlock":
-                            checkExpectedKind(expectedKind);
-                            break;   
+            cst.addNode(currentToken.lexeme, "leaf");
+            //May need to change this to see if it's undefined
+        switch(expectedKind) {  
             case "EOF":
                             if(currentToken.kind == "closeBlock"){
                                 checkExpectedKind(expectedKind);       //Seems odd, but it makes sense since it would be checking for the wrong kind otherwise
@@ -230,51 +255,23 @@
                             }
                             
                             break;
+            case "openBlock":
+            case "closeBlock":
             case "identifier":
-                           checkExpectedKind(expectedKind);
-                            break;
             case "type":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "assign":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "add":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "digit":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "openQuotation":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "closeQuotation":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "stringChar":
-                            checkExpectedKind(expectedKind);
-                            break;
-            case "boolval":
-                            checkExpectedKind(expectedKind);
-                            break;  
+            case "boolval": 
             case "testEquality":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "testInEquality":
-                            checkExpectedKind(expectedKind);
-                            break; 
             case "openParen":
-                            checkExpectedKind(expectedKind);
-                            break;
-            case "closeParen":
-                            checkExpectedKind(expectedKind);
-                            break;     
+            case "closeParen": 
             case "while":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "if":
-                            checkExpectedKind(expectedKind);
-                            break;
             case "print":
                             checkExpectedKind(expectedKind);
                             break;                    
@@ -345,6 +342,3 @@
         }
         return thisToken;
     }
-
-
-//fuck
