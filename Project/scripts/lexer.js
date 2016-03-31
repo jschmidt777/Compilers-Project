@@ -23,6 +23,7 @@
         var whitespace = /\s/;
         var space = /( +)/;
         var stringChar = /(( )|[a-z])/;
+        var tab = /(\t)/;
     
         //Split on any white space, deliminators, and even id, char, and digits. 
         //Basically, split on anything we may find interesting, since that will be tokenized.
@@ -72,6 +73,8 @@
                 tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)}); //not very efficient, though it does the job
             }else if(newline.test(currentLexeme.frag) && !insideString){
                 tokenStream.filter(function(lexeme){ return newline.test(lexeme.frag)}); //not very efficient, though it does the job
+            }else if(tab.test(currentLexeme.frag) && !insideString){
+                tokenStream.filter(function(lexeme){ return tab.test(lexeme.frag)}); //not very efficient, though it does the job
             }else if(keyword.test(currentLexeme.frag) && !insideString){
                 createToken(currentLexeme.frag, "keyword", currentLexeme.lineNum);
             }else if(boolval.test(currentLexeme.frag) && !insideString){

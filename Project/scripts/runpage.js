@@ -4,8 +4,6 @@
     var tokenIndex = 0;
     var currentToken = "";
     var errorCount = 0;
-    var EOF = "$";
-    var buttonClicksCount = 0;
 
     function init() {
         // Clear the message box.
@@ -17,8 +15,8 @@
         errorCount = 0;   
          
     }
-    
-    function btnCompile_click() {        
+ 
+    function btnCompile_click() {       
         init();
         checkVerboseMode();
         putMessage("Compilation Started");
@@ -35,8 +33,8 @@
         }else{
             document.getElementById("taCST").value = cst.toString();
         }
+        
         //TODO: Clear token array and allow for multiple button clicks
-  
     }
 
     function putMessage(msg) {

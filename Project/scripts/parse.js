@@ -17,7 +17,12 @@
     // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
     var cst = new Tree();
 
- function parse() {
+    function reset(){
+        //Call after each program to reset values...
+        //After more source code is inputted
+    }
+
+    function parse() {
         putMessage("\n" + "-------------------------------------------");
         putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
         putMessage("-------------------------------------------");
@@ -25,7 +30,6 @@
         // Grab the next token.
         currentToken = getNextToken();
         // A valid parse derives the program production, so begin there.
-        cst.addNode("Root", "branch");
         parseProgram();
         // Report the results.
         if(isParseError == false){
@@ -39,21 +43,32 @@
             putMessage("Parse found " + warningCount + " warning(s).");  
         } 
     }
+    /*
+    {
+        string a
+        a = "duhduhduh"
+        {
+            int a
+        }
+    }*/
     
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
-        cst.addNode("Program", "branch");
         if(!isParseError){
             putMessage("\n" + "---------------------------");
             putMessage( "Parsing program "+ programCount +".");
             putMessage("---------------------------");
             putMessage("\n");
         }
+        cst.addNode("Program", "branch");
         parseBlock();
-        cst.endChildren();
+        //cst.endChildren();
         matchAndConsume("EOF");
+        document.getElementById("taCST").value = "";
+        document.getElementById("taCST").value += cst.toString() + "\n";
         if (tokenIndex < tokens.length){
             programCount++;
+            //cst = new Tree();
             parseProgram();
         } //Otherwise we're done
 
@@ -62,10 +77,10 @@
     function parseBlock() {
         cst.addNode("Block", "branch");
         matchAndConsume("openBlock");
-        cst.endChildren();
         parseStatementList();
         // The only thing that can be in a block is a statementlist
         matchAndConsume("closeBlock");
+        cst.endChildren();
     }
 
     function parseStatementList(){
@@ -253,7 +268,6 @@
                             }else{
                                 checkExpectedKind(expectedKind);
                             }
-                            
                             break;
             case "openBlock":
             case "closeBlock":
