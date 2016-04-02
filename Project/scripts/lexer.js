@@ -2,7 +2,6 @@
  
     
     //Globals
-	var tokenStream = [];
     var lexemesArr = [];
     
     function lex()
@@ -145,12 +144,12 @@
         }
         
         if(!isError){
-        return tokenStream;
+            return tokenStream;
         }else{
-        tokenStream = null;
-        return tokenStream;    
-        //The error message will be displayed depending on what error lex found.  
-        // should return a stream of tokens
+            tokenStream = [];
+            return tokenStream;    
+            //The error message will be displayed depending on what error lex found.  
+            // should return a stream of tokens
         }
     } 
 

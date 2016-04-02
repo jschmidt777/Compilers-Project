@@ -17,11 +17,6 @@
     // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
     var cst = new Tree();
 
-    function reset(){
-        //Call after each program to reset values...
-        //After more source code is inputted
-    }
-
     function parse() {
         putMessage("\n" + "-------------------------------------------");
         putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
@@ -43,14 +38,7 @@
             putMessage("Parse found " + warningCount + " warning(s).");  
         } 
     }
-    /*
-    {
-        string a
-        a = "duhduhduh"
-        {
-            int a
-        }
-    }*/
+   
     
     function parseProgram() {
         // A program production can only produce a block, so parse the block production.
@@ -62,13 +50,17 @@
         }
         cst.addNode("Program", "branch");
         parseBlock();
-        //cst.endChildren();
+        
         matchAndConsume("EOF");
-        document.getElementById("taCST").value = "";
+        /*document.getElementById("taCST").value = "";
         document.getElementById("taCST").value += cst.toString() + "\n";
+        cst.root = null;
+        cst.cur = {};*/
+        
         if (tokenIndex < tokens.length){
             programCount++;
-            //cst = new Tree();
+            //document.getElementById("taCST").value = "";
+            //document.getElementById("taCST").value += cst.toString() + "\n";
             parseProgram();
         } //Otherwise we're done
 
@@ -218,6 +210,7 @@
 
     function parseBooleanExpr(){
         cst.addNode("BooleanExpr" ,"branch");
+        //faulty error here
         if(currentToken.kind == "openParen"){
             matchAndConsume("openParen");
             parseExpr();
