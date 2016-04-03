@@ -41,7 +41,7 @@
             putMessage("Error: No source code to compile.");
         }
 
-        symanticAnalysis(cstArr);
+        semanticAnalysis(cstArr);
         
         //resetTokenStream();
         //TODO: Clear token array and allow for multiple button clicks
