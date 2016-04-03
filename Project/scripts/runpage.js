@@ -10,14 +10,12 @@
     function init() {
         // Clear the message box. Clear the CST Output.
         document.getElementById("taOutput").value = "";
-        document.getElementById("taCST").value = "";
         // Set the initial values for the globals.
         tokenStream = [];
         tokens = "";
         tokenIndex = 0;
         currentToken = "";
-        errorCount = 0;   
-         
+        errorCount = 0;     
     }
  
     function btnCompile_click() {     
@@ -32,17 +30,34 @@
         putMessage("\n");
 
         if (tokens != ""){
+            //tokens = tokens.split($)
             parse();
+                if(isParseError){
+                    document.getElementById("taCST").value = "Error found, CST not completed."
+                }else{
+                    //for(i = 0; cstArr.length;)
+                    document.getElementById("taCST").value = cstArr.toString();
+                }
+           /* while(stillParsing){
+                createCST(programCount);
+                curCST = cstArr[programCount-1];
+                parse();
+                if(isParseError){
+                    document.getElementById("taCST").value = "Error found, CST not completed."
+                }else{
+                    document.getElementById("taCST").value = curCST.toString();
+                }
+            }*/
+            
+        }else{
+            putMessage("Error: No source code to compile");
         }
 
-        if(isParseError){
-            document.getElementById("taCST").value = "Error found, CST not completed."
-        }else{
-            document.getElementById("taCST").value = cst.toString();
-        }
+        
         
         //resetTokenStream();
         //TODO: Clear token array and allow for multiple button clicks
+        //reset tokenstream, stillParsing, ...
     }
 
     /*function resetTokenStream(){

@@ -13,14 +13,17 @@
     var isParseError = false;
     var warningCount = 0;
     var programCount = 1;
+    var stillParsing = true;
 
+   
     // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
-    var cst = new Tree();
+    createCST(programCount);        
+    var curCST = cstArr[0];
 
     function parse() {
-        putMessage("\n" + "-------------------------------------------");
+        putMessage("\n" + "--------------------------------------------");
         putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
-        putMessage("-------------------------------------------");
+        putMessage("--------------------------------------------");
         putMessage("\n");
         // Grab the next token.
         currentToken = getNextToken();
@@ -48,7 +51,7 @@
             putMessage("---------------------------");
             putMessage("\n");
         }
-        cst.addNode("Program", "branch");
+        curCST.addNode("Program "+programCount+"", "branch");
         parseBlock();
         
         matchAndConsume("EOF");
@@ -58,28 +61,33 @@
         cst.cur = {};*/
         
         if (tokenIndex < tokens.length){
+            //document.getElementById("taCST").value += curCST.toString() + "\n";
             programCount++;
+            createCST(programCount);
+            curCST = cstArr[programCount-1];
             //document.getElementById("taCST").value = "";
             //document.getElementById("taCST").value += cst.toString() + "\n";
             parseProgram();
-        } //Otherwise we're done
-
+        }else{
+        //Otherwise we're done
+            stillParsing = false;
+        }
     }
 
     function parseBlock() {
-        cst.addNode("Block", "branch");
+        curCST.addNode("Block", "branch");
         matchAndConsume("openBlock");
         parseStatementList();
         // The only thing that can be in a block is a statementlist
         matchAndConsume("closeBlock");
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseStatementList(){
-        cst.addNode("Statementlist", "branch");
+        curCST.addNode("Statementlist", "branch");
         if(currentToken.kind == "keyword" || currentToken.kind == "identifier" || currentToken.kind == "openBlock"){
             parseStatement();
-            cst.endChildren();
+            curCST.endChildren();
             parseStatementList();
             //could be more statements:
             //go back up the traversal
@@ -90,7 +98,7 @@
     }
 
     function parseStatement(){
-        cst.addNode("Statement", "branch");
+        curCST.addNode("Statement", "branch");
         if(currentToken.kind == "openBlock"){
             parseBlock();
             //go back to block since it must be an open block
@@ -120,14 +128,14 @@
             // must be an identifier, which means an assignment statement
             parseAssignmentStatement();
         }
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseWhileStatement(){
-        cst.addNode("WhileStatement", "branch");
+        curCST.addNode("WhileStatement", "branch");
         matchAndConsume("while");
         parseBooleanExpr();
-        cst.endChildren();
+        curCST.endChildren();
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
@@ -135,10 +143,10 @@
     }
 
     function parseIfStatement(){
-        cst.addNode("IfStatement", "branch");
+        curCST.addNode("IfStatement", "branch");
         matchAndConsume("if");
         parseBooleanExpr();
-        cst.endChildren();
+        curCST.endChildren();
         //would think I need a parseBlock() here right?
         //since parseStatementList() gets called after the boolExpr
         //I actually don't need it
@@ -146,33 +154,33 @@
     }
 
     function parsePrintStatement(){
-        cst.addNode("PrintStatement", "branch");
+        curCST.addNode("PrintStatement", "branch");
         matchAndConsume("print");
         matchAndConsume("openParen");
         parseExpr();
         matchAndConsume("closeParen");
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseVarDecl(){
         //could change this to take a parameter to make it more efficient
-        cst.addNode("VarDecl" ,"branch");
+        curCST.addNode("VarDecl" ,"branch");
         matchAndConsume("type");
         matchAndConsume("identifier");
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseAssignmentStatement(){
-        cst.addNode("AssignmentStatement" ,"branch");
+        curCST.addNode("AssignmentStatement" ,"branch");
         matchAndConsume("identifier");
         matchAndConsume("assign");
         parseExpr();
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseExpr(){
         var expressionLexeme = currentToken.kind;
-        cst.addNode("Expression", "branch");
+        curCST.addNode("Expression", "branch");
         switch(expressionLexeme){
             case "digit":
                     parseIntExpr();
@@ -192,11 +200,11 @@
                     //putMessage("You broke me!");
             break;
         }
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseIntExpr(){
-        cst.addNode("IntExpr", "branch");
+        curCST.addNode("IntExpr", "branch");
         matchAndConsume("digit");
         if(currentToken.kind == "add"){
             matchAndConsume("add");
@@ -204,12 +212,12 @@
         }else{
            //Just for constistency. No epsilon production. 
         }
-        cst.endChildren();
+        curCST.endChildren();
     }
 
 
     function parseBooleanExpr(){
-        cst.addNode("BooleanExpr" ,"branch");
+        curCST.addNode("BooleanExpr" ,"branch");
         //faulty error here
         if(currentToken.kind == "openParen"){
             matchAndConsume("openParen");
@@ -224,30 +232,30 @@
         }else if (currentToken.kind == "boolval"){
             matchAndConsume("boolval");
         }
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function parseStringExpr(){  
-        cst.addNode("StringExpr" ,"branch");
+        curCST.addNode("StringExpr" ,"branch");
         if (currentToken.kind == "stringChar"){
             consumeStringChar();
         }else{
             matchAndConsume("closeQuotation");
         }
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function consumeStringChar(){
-        cst.addNode("StringChar" ,"branch");
+        curCST.addNode("StringChar" ,"branch");
         matchAndConsume("stringChar"); 
         parseStringExpr();
-        cst.endChildren();
+        curCST.endChildren();
     }
 
     function matchAndConsume(expectedKind) {
         // Validate that we have the expected token kind and get the next token.
         if(!isParseError){
-            cst.addNode(currentToken.lexeme, "leaf");
+            curCST.addNode(currentToken.lexeme, "leaf");
             //May need to change this to see if it's undefined
         switch(expectedKind) {  
             case "EOF":

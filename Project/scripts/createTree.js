@@ -4,11 +4,19 @@
 // work by Michael Ardizzone and Tim Smith.
 //-----------------------------------------
 
+var cstArr = [];
+
+function createCST(num){
+    var cst = new Tree();
+        cst.num = num;
+        cstArr.push(cst);
+ }
+
 function Tree() {
     // ----------
     // Attributes
     // ----------
-    
+    this.num = 1;      // There will be at least one CST/AST
     this.root = null;  // Note the NULL root node of this tree.
     this.cur = {};     // Note the EMPTY current node of the tree we're building.
 
@@ -101,3 +109,4 @@ function Tree() {
         return traversalResult;
     };
 }
+
