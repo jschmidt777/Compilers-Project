@@ -13,7 +13,6 @@
     var isParseError = false;
     var warningCount = 0;
     var programCount = 1;
-    var stillParsing = true;
 
    
     // Create the CST. If it's used, great. Otherwise, space is cheap, so it just won't be outputted.
@@ -21,9 +20,9 @@
     var curCST = cstArr[0];
 
     function parse() {
-        putMessage("\n" + "--------------------------------------------");
+        putMessage("\n" + "----------------------------------------------");
         putMessage( "Parsing "+ tokens.length +" tokens from the lexical analysis.");
-        putMessage("--------------------------------------------");
+        putMessage("----------------------------------------------");
         putMessage("\n");
         // Grab the next token.
         currentToken = getNextToken();
@@ -70,7 +69,6 @@
             parseProgram();
         }else{
         //Otherwise we're done
-            stillParsing = false;
         }
     }
 

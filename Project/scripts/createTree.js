@@ -4,7 +4,9 @@
 // work by Michael Ardizzone and Tim Smith.
 //-----------------------------------------
 
+//Create an array of CSTs to be outputted to the page, and used for AST/symantic analysis.
 var cstArr = [];
+var astArr = [];
 
 function createCST(num){
     var cst = new Tree();
@@ -12,11 +14,17 @@ function createCST(num){
         cstArr.push(cst);
  }
 
+ function createAST(num){
+    var ast = new Tree();
+        ast.num = num;
+        astArr.push(ast);
+ }
+
 function Tree() {
     // ----------
     // Attributes
     // ----------
-    this.num = 1;      // There will be at least one CST/AST
+    this.num = 0;      // This will allow each CST/AST to be uniquely identified.
     this.root = null;  // Note the NULL root node of this tree.
     this.cur = {};     // Note the EMPTY current node of the tree we're building.
 

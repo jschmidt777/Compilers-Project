@@ -30,30 +30,18 @@
         putMessage("\n");
 
         if (tokens != ""){
-            //tokens = tokens.split($)
             parse();
                 if(isParseError){
-                    document.getElementById("taCST").value = "Error found, CST not completed."
+                    document.getElementById("taCST").value = "Error found, CST(s) not completed."
                 }else{
-                    //for(i = 0; cstArr.length;)
-                    document.getElementById("taCST").value = cstArr.toString();
-                }
-           /* while(stillParsing){
-                createCST(programCount);
-                curCST = cstArr[programCount-1];
-                parse();
-                if(isParseError){
-                    document.getElementById("taCST").value = "Error found, CST not completed."
-                }else{
-                    document.getElementById("taCST").value = curCST.toString();
-                }
-            }*/
-            
+                    var printCSTs = cstArr.join("");
+                    document.getElementById("taCST").value = printCSTs.toString();
+                }  
         }else{
-            putMessage("Error: No source code to compile");
+            putMessage("Error: No source code to compile.");
         }
 
-        
+        symanticAnalysis(cstArr);
         
         //resetTokenStream();
         //TODO: Clear token array and allow for multiple button clicks
