@@ -85,7 +85,6 @@
         curCST.addNode("Statementlist", "branch");
         if(currentToken.kind == "keyword" || currentToken.kind == "identifier" || currentToken.kind == "openBlock"){
             parseStatement();
-            curCST.endChildren();
             parseStatementList();
             //could be more statements:
             //go back up the traversal
@@ -93,6 +92,7 @@
         }else{
             //Do nothing. Epsilon production.
         }
+        curCST.endChildren();
     }
 
     function parseStatement(){
