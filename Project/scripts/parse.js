@@ -91,6 +91,7 @@
             //and reinitialize 
         }else{
             //Do nothing. Epsilon production.
+            curCST.addNode("ε", "leaf");
         }
         curCST.endChildren();
     }

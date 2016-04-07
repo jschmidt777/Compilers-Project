@@ -48,7 +48,7 @@ function traverseBlock(){
 
 function traverseStatementlist(){
 		childPtr++; //We know the second child of a block will be a statmentlist
-		if(cstPtr.children[childPtr].name == "Statementlist" && cstPtr.children[childPtr].children.length == 0 ){
+		if(cstPtr.children[childPtr].name == "Statementlist" && cstPtr.children[childPtr].children[0].name == "ε" ){
 			//Must be an epsilon production Statementlist, so we're done
 		}else{
 			stmtListPtr = cstPtr;
@@ -56,8 +56,6 @@ function traverseStatementlist(){
 			traverseStatement();
 			cstPtr = stmtListPtr.children[childPtr+1];
 			traverseStatementlist();
-			//cstPtr = stmtListPtr;
-			//This sorta works. There needs to be another pointer.
 		}	
 		/*if(cstPtr.children[childPtr].name == "Statementlist"){
 			//The function below acknowledges that an a statement can have a statmentlist in it.
@@ -75,15 +73,21 @@ function traverseStatementlist(){
 		
 }
 
-
+var stmtPtr = null; // point to the statment we are at
 function traverseStatement(){
 		if(cstPtr.children[childPtr].name == "Statement"){
-			var stmtPtr = cstPtr.children[childPtr].children[childPtr];
+			stmtPtr = cstPtr.children[childPtr].children[childPtr];
 			switch(stmtPtr.name){
 				case "VarDecl":
+						traverseVarDecl();
+						break;
 				case "AssignmentStatement":
+						//traverseAssignment();
+						traverseVarDecl();
+						break;
 				case "PrintStatement":
-					traverseVarDecl(stmtPtr);
+						traversePrint();
+						//traverseVarDecl();
 					//This will change, but for testing, the thing that matters is that I see an output.
 					break;
 				default:
@@ -101,14 +105,59 @@ function traverseStatement(){
 		}
 }
 
+var exprPtr = null; // point to the current expression we're looking at
+
 //adds the children of the vardecl statment to the AST
-// TODO: Make a separate function for Assignment. Too confusing otherwise.
-function traverseVarDecl(ptr){
-	curAST.addNode(ptr.name, "branch");
-	var children = ptr.children;
+function traverseVarDecl(){
+	curAST.addNode(stmtPtr.name, "branch");
+	var children = stmtPtr.children;
 	for(i = 0; i < children.length; i++){
 		curAST.addNode(children[i].name, "leaf");
 	}
+	curAST.endChildren();
+}
+
+function traversePrint(){
+	curAST.addNode("Print", "branch");
+	exprPtr = stmtPtr.children[2]; //point directly to the expression 
+	traverseExpression();
+	curAST.endChildren();
+}
+
+//travsersePrint same way: return once we meet a condition, in this case, get an expression
+// go to traverseExpression, and that's all we need. we can skip the last paren bc well... we don't need it.
+
+//again, this also needs to be modelled like parse, so maybe have separate fucntions for the diff types of expressions
+
+
+function traverseAssignment(){
+	curAST.addNode("Assignment", "branch");
+	var children = stmtPtr.children; // get the children of the assignmnet stmt
+ //this needs to be done with recussion. traverse expr will deal with finer details
+	var childPtr = 0;
+	curAST.addNode(children[childPtr].name, "leaf");
+	childPtr = children.length;
+		if (children[childPtr].name == "Expression"){
+			exprPtr = stmtPtr.children[0]; 
+			traverseExpression();
+		}
+	curAST.endChildren();
+}
+
+
+function traverseExpression(){
+	var children = exprPtr.children; // get the children of the expression
+	var childPtr = 0;
+		if(children[childPtr].name == "IntExpr"){
+			//traverseIntExpr()
+		}else if (children[childPtr].name == "BooleanExpr"){
+			//traverseBooleanExpr()
+		}else if (children[childPtr].name == "StringExpr"){
+			//traverseStringExpr()
+		}else{
+			//must've got hear from a printpexpr, so just print what ever the identifier is 
+			curAST.addNode(children[childPtr].name, "leaf");
+		}
 	curAST.endChildren();
 }
 
