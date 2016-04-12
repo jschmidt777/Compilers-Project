@@ -82,8 +82,8 @@ function traverseStatement(){
 						traverseVarDecl();
 						break;
 				case "AssignmentStatement":
-						//traverseAssignment();
-						traverseVarDecl();
+						traverseAssignment();
+						//traverseVarDecl();
 						break;
 				case "PrintStatement":
 						traversePrint();
@@ -133,12 +133,12 @@ function traversePrint(){
 function traverseAssignment(){
 	curAST.addNode("Assignment", "branch");
 	var children = stmtPtr.children; // get the children of the assignmnet stmt
- //this needs to be done with recussion. traverse expr will deal with finer details
+ //this needs to be done with recurssion. traverse expr will deal with finer details
 	var childPtr = 0;
 	curAST.addNode(children[childPtr].name, "leaf");
-	childPtr = children.length;
+	childPtr = children.length-1;
 		if (children[childPtr].name == "Expression"){
-			exprPtr = stmtPtr.children[0]; 
+			exprPtr = stmtPtr.children[childPtr]; 
 			traverseExpression();
 		}
 	curAST.endChildren();
@@ -149,16 +149,56 @@ function traverseExpression(){
 	var children = exprPtr.children; // get the children of the expression
 	var childPtr = 0;
 		if(children[childPtr].name == "IntExpr"){
-			//traverseIntExpr()
+			traverseIntExpr();
 		}else if (children[childPtr].name == "BooleanExpr"){
-			//traverseBooleanExpr()
+			traverseBooleanExpr();
 		}else if (children[childPtr].name == "StringExpr"){
-			//traverseStringExpr()
+			//traverseStringExpr();
 		}else{
-			//must've got hear from a printpexpr, so just print what ever the identifier is 
+			//just print what ever the identifier is. could get here from boolexpr or printexpr.
 			curAST.addNode(children[childPtr].name, "leaf");
 		}
 	curAST.endChildren();
 }
 
+function traverseIntExpr(){
+	var children = exprPtr.children[0].children;
+	var childPtr = children.length-1;
+		if(childPtr > 0){
+			curAST.addNode("Add", "branch")
+			curAST.addNode(children[0].name, "leaf");	
+			exprPtr = children[childPtr];
+			traverseExpression(); 
+			curAST.endChildren();
+		}else{
+			curAST.addNode(children[0].name, "leaf");
+		}
+}
+
+//var boolPtr = null;
+
+function traverseBooleanExpr(){
+	var children = exprPtr.children[0].children;
+	var childPtr = children.length-1;
+		if(childPtr > 0){
+			var boolOp = children[2].name;
+			var boolOpName = null;
+			if (boolOp == "=="){
+				boolOpName = "Equal";
+			}else if(boolOp == "!="){
+				boolOpName = "NotEqual";
+			}
+			curAST.addNode(boolOpName, "branch");
+			if(children[1].children[0].children.length == 0){
+				curAST.addNode(children[1].children[0].name, "leaf"); //the first expr before the bool op, though it can be an identfifier, so we check if it is here
+			}else{
+				curAST.addNode(children[1].children[0].children[0].name, "leaf"); //the first expr; before the boolop	
+			}
+			exprPtr = children[childPtr-1];	//the second expr; after the boolop
+			traverseExpression(); 
+			curAST.endChildren();
+		}else{
+			curAST.addNode(children[0].name, "leaf"); //we just get a boolval and we're done
+		}
+}
 

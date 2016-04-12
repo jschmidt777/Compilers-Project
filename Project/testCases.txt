@@ -204,3 +204,41 @@ TC_1
     a = 1
     print(a)
 }$
+
+TC_2
+{
+    int a
+    int b
+    a = 1
+    b = 1 + a
+    print(a)
+}$
+
+TC_3
+{
+    int a
+    int b
+    boolean c
+    a = 1
+    b = 1 + a
+    c = (true == false)
+    print(a)
+}$
+
+TC_4
+{
+    boolean b
+    b = (true == true)
+    b = (false != false)
+} $
+
+TC_5
+{
+    int a
+    a = 1
+
+    boolean b
+    b = (true == (true != (false == (true != (false != (a == a))))))
+
+    print(b)
+} $
