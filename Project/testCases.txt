@@ -242,3 +242,9 @@ TC_5
 
     print(b)
 } $
+
+{
+    string s
+    s = "a b c d e"
+} $
+

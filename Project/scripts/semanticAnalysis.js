@@ -35,14 +35,15 @@ var stmtListPtr = null; //points to the current Statementlist we're looking at
 function traverseBlock(){
 	if(!foundRoot){
 		cstPtr = workingCST.root.children[childPtr];
-		curAST.addNode(""+cstPtr.name+"", "branch");
+		curAST.addNode("BLOCK", "branch");
 		foundRoot = true;
 		traverseStatementlist();
 	}else{
-
+		curAST.addNode("BLOCK", "branch");
+		traverseStatementlist();
 	}
 	
-	//go to the blocks children and traverse them
+	//go to the block's children and traverse them
 }
                                     
 
@@ -57,20 +58,6 @@ function traverseStatementlist(){
 			cstPtr = stmtListPtr.children[childPtr+1];
 			traverseStatementlist();
 		}	
-		/*if(cstPtr.children[childPtr].name == "Statementlist"){
-			//The function below acknowledges that an a statement can have a statmentlist in it.
-			cstPtr = cstPtr.children[childPtr--];
-			traverseStatement();
-			//traverseStatementlist();
-			//traverseStatements(rootBlock.children[i]);
-		}else if(cstPtr.children[childPtr].name == "Statement"){
-			cstPtr = stmtListPtr.children[childPtr--];
-			traverseStatement();
-			//traverseStatementlist();
-		}else if(cstPtr.children[childPtr].name == "Statementlist" && cstPtr.children[childPtr].children.length == 0 ){
-			// We've hit an epsilon production Statementlist, so we don't need to do anything.
-		}*/
-		
 }
 
 var stmtPtr = null; // point to the statment we are at
@@ -152,8 +139,8 @@ function traverseExpression(){
 			traverseIntExpr();
 		}else if (children[childPtr].name == "BooleanExpr"){
 			traverseBooleanExpr();
-		}else if (children[childPtr].name == "StringExpr"){
-			//traverseStringExpr();
+		}else if (children[childPtr].name == "StringExpr"){  //these start with ", so skip that and go to the expr
+			traverseStringExpr();
 		}else{
 			//just print what ever the identifier is. could get here from boolexpr or printexpr.
 			curAST.addNode(children[childPtr].name, "leaf");
@@ -175,7 +162,6 @@ function traverseIntExpr(){
 		}
 }
 
-//var boolPtr = null;
 
 function traverseBooleanExpr(){
 	var children = exprPtr.children[0].children;
@@ -202,3 +188,27 @@ function traverseBooleanExpr(){
 		}
 }
 
+var taString = []; //so one leaf node with the entire string can be created
+function traverseStringExpr(){
+	var children = exprPtr.children[1].children[0]; // looks at the stringchar child, which is a child of the string expr
+	
+		if(children.children[0].name != "\""){
+			taString.push(children.children[0]);
+			exprPtr = children.children[1]; //points to the next char 
+			traverseExpression(); 
+		}else{
+			//must be an end quotation and we don't care about that so we're done
+		}
+	taString.join("");
+	curAST.addNode(taString.toString(), "leaf");
+	taString = "";
+}
+
+
+function traverseWhileExpr(){
+
+}
+
+function traverseIfExpr(){
+
+}
