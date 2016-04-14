@@ -139,14 +139,17 @@ function traverseExpression(){
 			traverseIntExpr();
 		}else if (children[childPtr].name == "BooleanExpr"){
 			traverseBooleanExpr();
-		}else if (children[childPtr].name == "StringExpr"){  //these start with ", so skip that and go to the expr
+		}else if (children[childPtr].name == "\""){  //these start with ", so skip that and go to the expr
 			traverseStringExpr();
+			createString();
 		}else{
 			//just print what ever the identifier is. could get here from boolexpr or printexpr.
 			curAST.addNode(children[childPtr].name, "leaf");
 		}
 	curAST.endChildren();
 }
+//}else if (children[childPtr+1].name == "StringExpr"){  //these start with ", so skip that and go to the expr
+//			traverseStringExpr();
 
 function traverseIntExpr(){
 	var children = exprPtr.children[0].children;
@@ -189,21 +192,37 @@ function traverseBooleanExpr(){
 }
 
 var taString = []; //so one leaf node with the entire string can be created
+var strExprPtr = null; //this is consistent since we are no longer trying to look at an expr, but rather a strExpr
+var insideStr = false;
 function traverseStringExpr(){
-	var children = exprPtr.children[1].children[0]; // looks at the stringchar child, which is a child of the string expr
-	
-		if(children.children[0].name != "\""){
-			taString.push(children.children[0]);
-			exprPtr = children.children[1]; //points to the next char 
-			traverseExpression(); 
-		}else{
-			//must be an end quotation and we don't care about that so we're done
-		}
-	taString.join("");
-	curAST.addNode(taString.toString(), "leaf");
-	taString = "";
+	if(!insideStr){
+    	strExprPtr = exprPtr.children[1].children[0]; // 
+    	insideStr = true;
+    }else{
+    	strExprPtr = strExprPtr.children[0];
+    }
+    //Do this so we don't overshoot when looking at the last strExpr
+    if(strExprPtr.children[0] != undefined){
+		var stringChar = strExprPtr.children[0];
+			if(stringChar.name != "\""){
+				taString.push(stringChar.name);
+				strExprPtr = strExprPtr.children[1];
+				traverseStringExpr();
+			} 
+	}else{
+		//We're done. Each stringExpr has been processed.
+	}
 }
 
+//Creates the string to for the strExpr in the tree
+function createString(){
+	var taOutputStr = "";
+	taOutputStr = taString.join("");
+	curAST.addNode(taOutputStr, "leaf");
+	taString = [];
+	strExprPtr = null;
+	insideStr = false;
+}
 
 function traverseWhileExpr(){
 

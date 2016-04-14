@@ -248,3 +248,10 @@ TC_5
     s = "a b c d e"
 } $
 
+{
+    string s
+    string t
+    s = "a b c d e"
+    t = "f g h i j"
+} $
+

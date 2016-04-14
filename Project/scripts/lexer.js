@@ -67,7 +67,7 @@
         for (i = 0; i < lexArrLen; i++){
             var currentLexeme = lexemesArr[i]; //Look at each potential token     
             if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && insideString){  
-                createToken("(space)", "stringChar", currentLexeme.lineNum); 
+                createToken(" ", "stringChar", currentLexeme.lineNum); 
             }else if(space.test(currentLexeme.frag) && currentLexeme.isSpaceChar && !insideString){
                 tokenStream.filter(function(lexeme){ return space.test(lexeme.isSpaceChar)}); //not very efficient, though it does the job
             }else if(newline.test(currentLexeme.frag) && !insideString){
