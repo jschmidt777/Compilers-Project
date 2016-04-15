@@ -20,6 +20,7 @@ function createCST(num){
         astArr.push(ast);
  }
 
+
 function Tree() {
     // ----------
     // Attributes

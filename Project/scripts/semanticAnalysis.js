@@ -32,61 +32,70 @@ function traverseCST(){
 var cstPtr = null;
 var childPtr = 0; //points to the child of what node we're looking at
 var stmtListPtr = null; //points to the current Statementlist we're looking at
+var curBlock = null;
 function traverseBlock(){
 	if(!foundRoot){
 		cstPtr = workingCST.root.children[childPtr];
+		curBlock = workingCST.root.children[childPtr];
 		curAST.addNode("BLOCK", "branch");
 		foundRoot = true;
 		traverseStatementlist();
 	}else{
 		curAST.addNode("BLOCK", "branch");
+		//var temp = curBlock; //notes where we are in the main blocks statmentlists
+		//curBlock = curBlock.children[0].children[0].children[1];
+		//reset pointer for statement?
 		traverseStatementlist();
+		//curBlock = temp[childPtr];
+		curAST.endChildren();
 	}
-	
-	//go to the block's children and traverse them
 }
                                     
 
 function traverseStatementlist(){
 		childPtr++; //We know the second child of a block will be a statmentlist
-		if(cstPtr.children[childPtr].name == "Statementlist" && cstPtr.children[childPtr].children[0].name == "ε" ){
+		if(curBlock.children[childPtr].name == "Statementlist" && curBlock.children[childPtr].children[0].name == "ε" ){
 			//Must be an epsilon production Statementlist, so we're done
 		}else{
-			stmtListPtr = cstPtr;
-			cstPtr = cstPtr.children[childPtr--];
+			stmtListPtr = curBlock;
+			curBlock = curBlock.children[childPtr--];
 			traverseStatement();
-			cstPtr = stmtListPtr.children[childPtr+1];
+			curBlock = stmtListPtr.children[childPtr+1];
 			traverseStatementlist();
 		}	
 }
 
 var stmtPtr = null; // point to the statment we are at
 function traverseStatement(){
-		if(cstPtr.children[childPtr].name == "Statement"){
-			stmtPtr = cstPtr.children[childPtr].children[childPtr];
+		if(curBlock.children[childPtr].name == "Statement"){
+			stmtPtr = curBlock.children[childPtr].children[childPtr];
 			switch(stmtPtr.name){
 				case "VarDecl":
 						traverseVarDecl();
 						break;
 				case "AssignmentStatement":
 						traverseAssignment();
-						//traverseVarDecl();
 						break;
 				case "PrintStatement":
 						traversePrint();
-						//traverseVarDecl();
-					//This will change, but for testing, the thing that matters is that I see an output.
-					break;
+						break;
+				case "WhileStatement":
+						traverseWhileExpr();
+						break;
+				case "IfStatement":
+						traverseIfExpr();
+						break;
 				default:
 					break;
 			}
 			//traverseStatementlist();
 			//maybe increment childPtr here?
 			//cstPtr = stmtListPtr;
-		}else if(cstPtr.children[childPtr].name == "Statementlist"){
+		}else if(curBlock.children[childPtr].name == "Statementlist"){
 			//a statement can have a child of statementlist
 			traverseStatement();
-
+		}else if(curBlock.children[childPtr].name == "Block"){
+			traverseBlock();
 		}else{
 			// the Statementlist could have nothing in it, so do something......
 		}
@@ -167,16 +176,12 @@ function traverseIntExpr(){
 
 
 function traverseBooleanExpr(){
-	var children = exprPtr.children[0].children;
-	var childPtr = children.length-1;
+	var children = null;
+	if(exprPtr.children[0].children[0] != undefined){ //regularly looking at a boolexpr
+		children = exprPtr.children[0].children;
+		var childPtr = children.length-1;
 		if(childPtr > 0){
-			var boolOp = children[2].name;
-			var boolOpName = null;
-			if (boolOp == "=="){
-				boolOpName = "Equal";
-			}else if(boolOp == "!="){
-				boolOpName = "NotEqual";
-			}
+			var boolOpName = assignBoolOp(children);
 			curAST.addNode(boolOpName, "branch");
 			if(children[1].children[0].children.length == 0){
 				curAST.addNode(children[1].children[0].name, "leaf"); //the first expr before the bool op, though it can be an identfifier, so we check if it is here
@@ -189,6 +194,36 @@ function traverseBooleanExpr(){
 		}else{
 			curAST.addNode(children[0].name, "leaf"); //we just get a boolval and we're done
 		}
+	}else{ //different pattern if we encounter an if or a while
+		if(exprPtr.children.length == 1){
+			curAST.addNode(exprPtr.children[0].name, "leaf");
+		}else{
+			var expr = exprPtr.children[1].children[0];
+			var boolOpName = assignBoolOp(exprPtr.children);
+			curAST.addNode(boolOpName, "branch");
+			
+			if (expr.name != "BooleanExpr"){
+				curAST.addNode(expr.name, "leaf");
+			}else{
+				curAST.addNode(expr.children[0].name, "leaf");
+			}
+			exprPtr = exprPtr.children[3];
+			traverseExpression();
+			curAST.endChildren();
+		}
+	}
+	
+}
+
+function assignBoolOp(ptr){
+	var boolOp = ptr[2].name;
+	var boolOpName = null;
+		if (boolOp == "=="){
+			boolOpName = "Equal";
+		}else if(boolOp == "!="){
+			boolOpName = "NotEqual";
+		}
+	return boolOpName;
 }
 
 var taString = []; //so one leaf node with the entire string can be created
@@ -225,9 +260,15 @@ function createString(){
 }
 
 function traverseWhileExpr(){
-
+	curAST.addNode("While", "branch");
+	exprPtr = stmtPtr.children[1]; 
+	traverseBooleanExpr(); //goes to booleanExpr, so a little inconsistent, but it's necessary to get the correct pointer
+	curAST.endChildren();
 }
 
 function traverseIfExpr(){
-
+	curAST.addNode("If", "branch");
+	exprPtr = stmtPtr.children[1]; 
+	traverseBooleanExpr(); //goes to booleanExpr, so a little inconsistent, but it's necessary to get the correct pointer
+	curAST.endChildren();
 }
