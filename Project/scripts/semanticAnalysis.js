@@ -14,29 +14,31 @@ function semanticAnalysis(cstArr){
 		workingCST = cstArr[i];
 		traverseCST();
 	}
+
 	var printASTs = astArr.join("END PROGRAM" + "\n");
 	//could add the numbers with a for if I wanted but it's important just to know when a new program is processed.
     document.getElementById("taAST").value = printASTs.toString();
 }
 
 function traverseCST(){
+	foundRoot = false;
+	cstPtr = null;
 	createAST(workingCST.num);
 	curAST = astArr[workingCST.num-1];
 	//The child of the root for any CST is going to be a block, so add that to the AST
 	traverseBlock();
-	//workingCST.cur is how the children array will be accessed
 }
 
 //I think this needs to work more like parse. Have a global that points to where
 //I am at in the curCST, and GET the next node and start comparing.
 var cstPtr = null;
-var childPtr = 0; //points to the child of what node we're looking at
+//var childPtr = 0; //points to the child of what node we're looking at
 var stmtListPtr = null; //points to the current Statementlist we're looking at
 var curBlock = null;
 function traverseBlock(){
 	if(!foundRoot){
-		cstPtr = workingCST.root.children[childPtr];
-		curBlock = workingCST.root.children[childPtr];
+		cstPtr = workingCST.root.children[0];
+		curBlock = workingCST.root.children[0];
 		curAST.addNode("BLOCK", "branch");
 		foundRoot = true;
 		traverseStatementlist();
@@ -53,22 +55,23 @@ function traverseBlock(){
                                     
 
 function traverseStatementlist(){
-		childPtr++; //We know the second child of a block will be a statmentlist
-		if(curBlock.children[childPtr].name == "Statementlist" && curBlock.children[childPtr].children[0].name == "ε" ){
+			//We know the second child of a block will be a statmentlist
+		if(curBlock.children[1].name == "Statementlist" && curBlock.children[1].children[0].name == "ε" ){
 			//Must be an epsilon production Statementlist, so we're done
 		}else{
 			stmtListPtr = curBlock;
-			curBlock = curBlock.children[childPtr--];
+			curBlock = curBlock.children[1];
 			traverseStatement();
-			curBlock = stmtListPtr.children[childPtr+1];
+			curBlock = stmtListPtr.children[1];
 			traverseStatementlist();
+			curAST.endChildren(); //This closes off the block 
 		}	
 }
 
 var stmtPtr = null; // point to the statment we are at
 function traverseStatement(){
-		if(curBlock.children[childPtr].name == "Statement"){
-			stmtPtr = curBlock.children[childPtr].children[childPtr];
+		if(curBlock.children[0].name == "Statement"){
+			stmtPtr = curBlock.children[0].children[0];
 			switch(stmtPtr.name){
 				case "VarDecl":
 						traverseVarDecl();
@@ -85,17 +88,19 @@ function traverseStatement(){
 				case "IfStatement":
 						traverseIfExpr();
 						break;
+				case "Block":
+						var temp = curBlock;
+						curBlock = stmtPtr;
+						traverseBlock();
+						curBlock = temp;
+						traverseStatementlist();
+						break;
 				default:
 					break;
 			}
-			//traverseStatementlist();
-			//maybe increment childPtr here?
-			//cstPtr = stmtListPtr;
-		}else if(curBlock.children[childPtr].name == "Statementlist"){
+		}else if(curBlock.children[0].name == "Statementlist"){
 			//a statement can have a child of statementlist
 			traverseStatement();
-		}else if(curBlock.children[childPtr].name == "Block"){
-			traverseBlock();
 		}else{
 			// the Statementlist could have nothing in it, so do something......
 		}
@@ -155,7 +160,6 @@ function traverseExpression(){
 			//just print what ever the identifier is. could get here from boolexpr or printexpr.
 			curAST.addNode(children[childPtr].name, "leaf");
 		}
-	curAST.endChildren();
 }
 //}else if (children[childPtr+1].name == "StringExpr"){  //these start with ", so skip that and go to the expr
 //			traverseStringExpr();
@@ -263,12 +267,13 @@ function traverseWhileExpr(){
 	curAST.addNode("While", "branch");
 	exprPtr = stmtPtr.children[1]; 
 	traverseBooleanExpr(); //goes to booleanExpr, so a little inconsistent, but it's necessary to get the correct pointer
-	curAST.endChildren();
+	//traverseBlock();
+	//curAST.endChildren();
 }
 
 function traverseIfExpr(){
 	curAST.addNode("If", "branch");
 	exprPtr = stmtPtr.children[1]; 
 	traverseBooleanExpr(); //goes to booleanExpr, so a little inconsistent, but it's necessary to get the correct pointer
-	curAST.endChildren();
+	//curAST.endChildren();
 }
