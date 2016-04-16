@@ -36,12 +36,20 @@
                 }else{
                     var printCSTs = cstArr.join("");
                     document.getElementById("taCST").value = printCSTs.toString();
+                    //semanticAnalysis(); //creates ASTs, symbol tables, and performs scope and type checking on CSTs.
+                    for(i = 0; i < cstArr.length; i++){
+                        workingCST = cstArr[i];
+                        traverseCST();
+                    }
+                    var printASTs = astArr.join("END PROGRAM" + "\n");
+                    //could add the numbers with a for if I wanted but it's important just to know when a new program is processed.
+                    document.getElementById("taAST").value = printASTs.toString();
                 }  
         }else{
             putMessage("Error: No source code to compile.");
         }
 
-        semanticAnalysis(cstArr);
+        
         
         //resetTokenStream();
         //TODO: Clear token array and allow for multiple button clicks

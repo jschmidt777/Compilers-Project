@@ -2,42 +2,54 @@
 //4-3-2016
 //semanticAnalysis.js
 
-
-var curAST = astArr[0];
+//Globals
+var curAST = null;
+//I think this needs to work more like parse. Have a global that points to where
+//I am at in the curCST, and GET the next node and start comparing.
+var stmtListPtr = null; //points to the current Statementlist we're looking at
+var curBlock = null;
+var stmtPtr = null; // point to the statment we are at
+var exprPtr = null; // point to the current expression we're looking at
 
 //The CST we are currently analyzing
 var workingCST = cstArr[0];
 var foundRoot = false;
 
-function semanticAnalysis(cstArr){
+/*var i = 0;
+workingCST = cstArr[i];
+createAST(i+1);
+curAST = astArr[i];*/
+
+function semanticAnalysis(){
 	for(i = 0; i < cstArr.length; i++){
 		workingCST = cstArr[i];
+		createAST(i+1);
+		curAST = astArr[i];
 		traverseCST();
 	}
-
-	var printASTs = astArr.join("END PROGRAM" + "\n");
-	//could add the numbers with a for if I wanted but it's important just to know when a new program is processed.
-    document.getElementById("taAST").value = printASTs.toString();
+	/*traverseCST();
+	if(i < cstArr.length){
+		i++;
+		workingCST = cstArr[i];
+		createAST(i+1);
+		curAST = astArr[i];
+		traverseCST();
+	}else{
+		//We're done. The AST(s) will be printed in the runpage.js
+	}*/
 }
 
 function traverseCST(){
 	foundRoot = false;
-	cstPtr = null;
 	createAST(workingCST.num);
 	curAST = astArr[workingCST.num-1];
 	//The child of the root for any CST is going to be a block, so add that to the AST
 	traverseBlock();
 }
 
-//I think this needs to work more like parse. Have a global that points to where
-//I am at in the curCST, and GET the next node and start comparing.
-var cstPtr = null;
-//var childPtr = 0; //points to the child of what node we're looking at
-var stmtListPtr = null; //points to the current Statementlist we're looking at
-var curBlock = null;
+
 function traverseBlock(){
 	if(!foundRoot){
-		cstPtr = workingCST.root.children[0];
 		curBlock = workingCST.root.children[0];
 		curAST.addNode("BLOCK", "branch");
 		foundRoot = true;
@@ -68,7 +80,7 @@ function traverseStatementlist(){
 		}	
 }
 
-var stmtPtr = null; // point to the statment we are at
+
 function traverseStatement(){
 		if(curBlock.children[0].name == "Statement"){
 			stmtPtr = curBlock.children[0].children[0];
@@ -106,7 +118,6 @@ function traverseStatement(){
 		}
 }
 
-var exprPtr = null; // point to the current expression we're looking at
 
 //adds the children of the vardecl statment to the AST
 function traverseVarDecl(){
