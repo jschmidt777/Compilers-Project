@@ -19,30 +19,26 @@ var foundRoot = false;
 workingCST = cstArr[i];
 createAST(i+1);
 curAST = astArr[i];*/
+var cstsLength = cstArr.length;
 
 function semanticAnalysis(){
-	for(i = 0; i < cstArr.length; i++){
-		workingCST = cstArr[i];
-		createAST(i+1);
-		curAST = astArr[i];
+	
+	for(i = cstsLength; i > 0; i--){
+		workingCST = cstArr.shift();
+		if(workingCST != undefined){
+			createAST(workingCST.num);
+		}else{
+			break;
+		}
+		curAST = astArr[workingCST.num-1];
 		traverseCST();
 	}
-	/*traverseCST();
-	if(i < cstArr.length){
-		i++;
-		workingCST = cstArr[i];
-		createAST(i+1);
-		curAST = astArr[i];
-		traverseCST();
-	}else{
-		//We're done. The AST(s) will be printed in the runpage.js
-	}*/
 }
 
-function traverseCST(){
+function traverseCST(theCST){
 	foundRoot = false;
-	createAST(workingCST.num);
-	curAST = astArr[workingCST.num-1];
+	/*createAST(workingCST.num);
+	curAST = astArr[workingCST.num-1];*/
 	//The child of the root for any CST is going to be a block, so add that to the AST
 	traverseBlock();
 }
@@ -56,11 +52,7 @@ function traverseBlock(){
 		traverseStatementlist();
 	}else{
 		curAST.addNode("BLOCK", "branch");
-		//var temp = curBlock; //notes where we are in the main blocks statmentlists
-		//curBlock = curBlock.children[0].children[0].children[1];
-		//reset pointer for statement?
 		traverseStatementlist();
-		//curBlock = temp[childPtr];
 		curAST.endChildren();
 	}
 }
