@@ -4,41 +4,41 @@
 
 //Globals
 var curAST = null;
-//I think this needs to work more like parse. Have a global that points to where
-//I am at in the curCST, and GET the next node and start comparing.
-var stmtListPtr = null; //points to the current Statementlist we're looking at
+var curSymbolTable = null;
+//var curScope = 0; //Keeps track of our current scope. May not need.
+//This works similar to parse, in the way that I'm using recursive decent
+//to find the patterns I need from a CST to make an AST. I use pointer to do this,
+//which point to the key parts of the CST, and allow for extraction of those parts.
+
+var stmtListPtr = null; 
 var curBlock = null;
-var stmtPtr = null; // point to the statment we are at
-var exprPtr = null; // point to the current expression we're looking at
+var stmtPtr = null; 
+var exprPtr = null; 
 
 //The CST we are currently analyzing
 var workingCST = cstArr[0];
 var foundRoot = false;
 
-/*var i = 0;
-workingCST = cstArr[i];
-createAST(i+1);
-curAST = astArr[i];*/
-var cstsLength = cstArr.length;
-
 function semanticAnalysis(){
-	
+	var cstsLength = cstArr.length;
 	for(i = cstsLength; i > 0; i--){
 		workingCST = cstArr.shift();
 		if(workingCST != undefined){
 			createAST(workingCST.num);
+			createSymbolTable(workingCST.num);
 		}else{
 			break;
 		}
 		curAST = astArr[workingCST.num-1];
-		traverseCST();
+		curSymbolTable = symbolTableArr[workingCST.num-1];
+		traverseCST(); //Make the AST first, then do scope and type checking
+		//checkScope();
+		//checkType();
 	}
 }
 
 function traverseCST(theCST){
 	foundRoot = false;
-	/*createAST(workingCST.num);
-	curAST = astArr[workingCST.num-1];*/
 	//The child of the root for any CST is going to be a block, so add that to the AST
 	traverseBlock();
 }
@@ -49,10 +49,14 @@ function traverseBlock(){
 		curBlock = workingCST.root.children[0];
 		curAST.addNode("BLOCK", "branch");
 		foundRoot = true;
+		curSymbolTable.createScope(curSymbolTable.curScope); //The curScope is zero at this point.
 		traverseStatementlist();
 	}else{
 		curAST.addNode("BLOCK", "branch");
+		curSymbolTable.curScope++;
+		curSymbolTable.createScope(curSymbolTable.curScope); //Already points at our new scope we create
 		traverseStatementlist();
+		curSymbolTable.curScope--;
 		curAST.endChildren();
 	}
 }
@@ -118,6 +122,7 @@ function traverseVarDecl(){
 	for(i = 0; i < children.length; i++){
 		curAST.addNode(children[i].name, "leaf");
 	}
+	curSymbolTable.
 	curAST.endChildren();
 }
 
@@ -270,13 +275,11 @@ function traverseWhileExpr(){
 	curAST.addNode("While", "branch");
 	exprPtr = stmtPtr.children[1]; 
 	traverseBooleanExpr(); //goes to booleanExpr, so a little inconsistent, but it's necessary to get the correct pointer
-	//traverseBlock();
-	//curAST.endChildren();
+	
 }
 
 function traverseIfExpr(){
 	curAST.addNode("If", "branch");
 	exprPtr = stmtPtr.children[1]; 
 	traverseBooleanExpr(); //goes to booleanExpr, so a little inconsistent, but it's necessary to get the correct pointer
-	//curAST.endChildren();
 }
