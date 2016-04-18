@@ -42,9 +42,9 @@ function symbTable(){
 					if(scope_symbol.type == "string"){
 						scope_symbol.val = "";
 					}else if(scope_symbol.type == "int"){
-						scope_symbol.val = 0;
+						scope_symbol.val = "";
 					}else if(scope_symbol.type == "boolean"){
-						scope_symbol.val = "false";
+						scope_symbol.val = "";
 					}else{
 						//this should never be hit
 					}
@@ -58,22 +58,44 @@ function symbTable(){
 					this.scope = 0;
 					this.val = "";
 					this.line = 0;
+					this.isInitialized = false;
 					this.toString = function(){
-						var result = "\tID:" + this.id + " TYPE:" + this.type + " VALUE:" + this.val + " LINE#:" + this.line +"\n";
+						var result = "\tID:" + this.id + " TYPE:" + this.type + " LINE#:" + this.line +"\n";
 						return result;		
 					}
 				}
-			//TODO: Add assignValue() method
-			// This needs to check if there is an id already in the symbol array
-			// Infer type from previous scope by looking for the same id, if there isn't one assigned
-	}
-	//TODO: add toString
-	this.toString = function(){
-		var result = "";
-		for(i = 0; i < this.scopeArr.length; i++){
-			result += "\n"+"Scope" + i + "/" +this.scopeArr[i].symbols + "\n";
 		}
-		return result;
-	}
+
+
+	this.toString = function(){
+				var result = "";
+				for(i = 0; i < this.scopeArr.length; i++){
+					if(this.scopeArr[i].symbols.length == 0){
+						result += "\n"+"Scope" + i + "/ Symbol(s) present, but declared in previous scope. \n";
+					}else{
+						result += "\n"+"Scope" + i + "/" +this.scopeArr[i].symbols + "\n";
+					}
+				}
+				return result;
+			}
+
+	this.scypeCheck = function(){
+					var curBlock = null;
+					checkAST();
+					//first, check if there is already an id of the same name declared (error)
+						//find the id when it was declared and assign the val
+						//only do so if the type is correct (error otherwise)
+						//if there is more than one of this id in the symbols, error
+						//if the id isn't found, look back a scope and check if it was declared
+							//if it's there, assign it the val (error otherwise)
+					//then, check if the id being assigned to anything at all (warn)
+					//last, some kind of warn if the id is never used
+
+					function checkAST(){
+						checkBlock();
+					}
+				}
 
 }
+	
+	

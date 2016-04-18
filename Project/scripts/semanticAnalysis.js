@@ -5,6 +5,7 @@
 //Globals
 var curAST = null;
 var curSymbolTable = null;
+var curSymbol = null;
 //var curScope = 0; //Keeps track of our current scope. May not need.
 //This works similar to parse, in the way that I'm using recursive decent
 //to find the patterns I need from a CST to make an AST. I use pointer to do this,
@@ -32,8 +33,7 @@ function semanticAnalysis(){
 		curAST = astArr[workingCST.num-1];
 		curSymbolTable = symbolTableArr[workingCST.num-1];
 		traverseCST(); //Make the AST first, then do scope and type checking
-		//checkScope();
-		//checkType();
+		//curSymbolTable.scypeCheck();
 	}
 }
 
@@ -47,16 +47,16 @@ function traverseCST(theCST){
 function traverseBlock(){
 	if(!foundRoot){
 		curBlock = workingCST.root.children[0];
-		curAST.addNode("BLOCK", "branch");
+		curAST.addNode("BLOCK", "branch", curBlock.linenum);
 		foundRoot = true;
-		curSymbolTable.createScope(curSymbolTable.curScope); //The curScope is zero at this point.
+		//curSymbolTable.createScope(curSymbolTable.curScope); //The curScope is zero at this point.
 		traverseStatementlist();
 	}else{
-		curAST.addNode("BLOCK", "branch");
-		curSymbolTable.curScope++;
-		curSymbolTable.createScope(curSymbolTable.curScope); //Already points at our new scope we create
+		curAST.addNode("BLOCK", "branch", curBlock.linenum);
+		//curSymbolTable.curScope++;
+		//curSymbolTable.createScope(curSymbolTable.curScope); //Already points at our new scope we create
 		traverseStatementlist();
-		curSymbolTable.curScope--;
+		//curSymbolTable.curScope--;
 		curAST.endChildren();
 	}
 }
@@ -117,17 +117,17 @@ function traverseStatement(){
 
 //adds the children of the vardecl statment to the AST
 function traverseVarDecl(){
-	curAST.addNode(stmtPtr.name, "branch");
+	curAST.addNode(stmtPtr.name, "branch", stmtPtr.linenum);
 	var children = stmtPtr.children;
 	for(i = 0; i < children.length; i++){
-		curAST.addNode(children[i].name, "leaf");
+		curAST.addNode(children[i].name, "leaf", children[i].linenum);
 	}
-	curSymbolTable.workingScope.createSymbol(children[0].name, children[1].name, children[1].linenum);//the scope for the symbol is added inherently in this method
+	//curSymbolTable.workingScope.createSymbol(children[0].name, children[1].name, children[1].linenum);//the scope for the symbol is added inherently in this method
 	curAST.endChildren();
 }
 
 function traversePrint(){
-	curAST.addNode("Print", "branch");
+	curAST.addNode("Print", "branch", stmtPtr.linenum);
 	exprPtr = stmtPtr.children[2]; //point directly to the expression 
 	traverseExpression();
 	curAST.endChildren();
@@ -140,11 +140,10 @@ function traversePrint(){
 
 
 function traverseAssignment(){
-	curAST.addNode("Assignment", "branch");
+	curAST.addNode("Assignment", "branch", stmtPtr.linenum);
 	var children = stmtPtr.children; // get the children of the assignmnet stmt
- //this needs to be done with recurssion. traverse expr will deal with finer details
 	var childPtr = 0;
-	curAST.addNode(children[childPtr].name, "leaf");
+	curAST.addNode(children[childPtr].name, "leaf", children[childPtr].linenum);
 	childPtr = children.length-1;
 		if (children[childPtr].name == "Expression"){
 			exprPtr = stmtPtr.children[childPtr]; 
@@ -166,23 +165,21 @@ function traverseExpression(){
 			createString();
 		}else{
 			//just print what ever the identifier is. could get here from boolexpr or printexpr.
-			curAST.addNode(children[childPtr].name, "leaf");
+			curAST.addNode(children[childPtr].name, "leaf", children[childPtr].linenum);
 		}
 }
-//}else if (children[childPtr+1].name == "StringExpr"){  //these start with ", so skip that and go to the expr
-//			traverseStringExpr();
 
 function traverseIntExpr(){
 	var children = exprPtr.children[0].children;
 	var childPtr = children.length-1;
 		if(childPtr > 0){
-			curAST.addNode("Add", "branch")
-			curAST.addNode(children[0].name, "leaf");	
+			curAST.addNode("Add", "branch", children[0].linenum)
+			curAST.addNode(children[0].name, "leaf", children[0].linenum);	
 			exprPtr = children[childPtr];
 			traverseExpression(); 
 			curAST.endChildren();
 		}else{
-			curAST.addNode(children[0].name, "leaf");
+			curAST.addNode(children[0].name, "leaf", children[0].linenum);
 		}
 }
 
@@ -194,30 +191,30 @@ function traverseBooleanExpr(){
 		var childPtr = children.length-1;
 		if(childPtr > 0){
 			var boolOpName = assignBoolOp(children);
-			curAST.addNode(boolOpName, "branch");
+			curAST.addNode(boolOpName, "branch", children[1].linenum);
 			if(children[1].children[0].children.length == 0){
 				curAST.addNode(children[1].children[0].name, "leaf"); //the first expr before the bool op, though it can be an identfifier, so we check if it is here
 			}else{
-				curAST.addNode(children[1].children[0].children[0].name, "leaf"); //the first expr; before the boolop	
+				curAST.addNode(children[1].children[0].children[0].name, "leaf", children[1].children[0].children[0].linenum); //the first expr; before the boolop	
 			}
 			exprPtr = children[childPtr-1];	//the second expr; after the boolop
 			traverseExpression(); 
 			curAST.endChildren();
 		}else{
-			curAST.addNode(children[0].name, "leaf"); //we just get a boolval and we're done
+			curAST.addNode(children[0].name, "leaf", children[0].linenum); //we just get a boolval and we're done
 		}
 	}else{ //different pattern if we encounter an if or a while
 		if(exprPtr.children.length == 1){
-			curAST.addNode(exprPtr.children[0].name, "leaf");
+			curAST.addNode(exprPtr.children[0].name, "leaf", exprPtr.children[0].linenum);
 		}else{
 			var expr = exprPtr.children[1].children[0];
 			var boolOpName = assignBoolOp(exprPtr.children);
-			curAST.addNode(boolOpName, "branch");
+			curAST.addNode(boolOpName, "branch", exprPtr.children[1].children[0].linenum);
 			
 			if (expr.name != "BooleanExpr"){
-				curAST.addNode(expr.name, "leaf");
+				curAST.addNode(expr.name, "leaf", expr.linenum);
 			}else{
-				curAST.addNode(expr.children[0].name, "leaf");
+				curAST.addNode(expr.children[0].name, "leaf", expr.children[0].linenum);
 			}
 			exprPtr = exprPtr.children[3];
 			traverseExpression();
@@ -265,7 +262,7 @@ function traverseStringExpr(){
 function createString(){
 	var taOutputStr = "";
 	taOutputStr = taString.join("");
-	curAST.addNode(taOutputStr, "leaf");
+	curAST.addNode(taOutputStr, "leaf", exprPtr.linenum);
 	taString = [];
 	strExprPtr = null;
 	insideStr = false;
