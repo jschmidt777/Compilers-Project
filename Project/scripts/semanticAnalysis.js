@@ -122,7 +122,7 @@ function traverseVarDecl(){
 	for(i = 0; i < children.length; i++){
 		curAST.addNode(children[i].name, "leaf");
 	}
-	curSymbolTable.
+	curSymbolTable.workingScope.createSymbol(children[0].name, children[1].name, children[1].linenum);//the scope for the symbol is added inherently in this method
 	curAST.endChildren();
 }
 
@@ -149,7 +149,7 @@ function traverseAssignment(){
 		if (children[childPtr].name == "Expression"){
 			exprPtr = stmtPtr.children[childPtr]; 
 			traverseExpression();
-		}
+		}	
 	curAST.endChildren();
 }
 

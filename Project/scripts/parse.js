@@ -73,7 +73,7 @@
     }
 
     function parseBlock() {
-        curCST.addNode("Block", "branch");
+        curCST.addNode("Block", "branch", currentToken.lineNum);
         matchAndConsume("openBlock");
         parseStatementList();
         // The only thing that can be in a block is a statementlist
@@ -82,7 +82,7 @@
     }
 
     function parseStatementList(){
-        curCST.addNode("Statementlist", "branch");
+        curCST.addNode("Statementlist", "branch", currentToken.lineNum);
         if(currentToken.kind == "keyword" || currentToken.kind == "identifier" || currentToken.kind == "openBlock"){
             parseStatement();
             parseStatementList();
@@ -91,13 +91,13 @@
             //and reinitialize 
         }else{
             //Do nothing. Epsilon production.
-            curCST.addNode("ε", "leaf");
+            curCST.addNode("ε", "leaf", currentToken.lineNum);
         }
         curCST.endChildren();
     }
 
     function parseStatement(){
-        curCST.addNode("Statement", "branch");
+        curCST.addNode("Statement", "branch", currentToken.lineNum);
         if(currentToken.kind == "openBlock"){
             parseBlock();
             //go back to block since it must be an open block
@@ -131,7 +131,7 @@
     }
 
     function parseWhileStatement(){
-        curCST.addNode("WhileStatement", "branch");
+        curCST.addNode("WhileStatement", "branch", currentToken.lineNum);
         matchAndConsume("while");
         parseBooleanExpr();
         curCST.endChildren();
@@ -142,7 +142,7 @@
     }
 
     function parseIfStatement(){
-        curCST.addNode("IfStatement", "branch");
+        curCST.addNode("IfStatement", "branch", currentToken.lineNum);
         matchAndConsume("if");
         parseBooleanExpr();
         curCST.endChildren();
@@ -153,7 +153,7 @@
     }
 
     function parsePrintStatement(){
-        curCST.addNode("PrintStatement", "branch");
+        curCST.addNode("PrintStatement", "branch", currentToken.lineNum);
         matchAndConsume("print");
         matchAndConsume("openParen");
         parseExpr();
@@ -163,14 +163,14 @@
 
     function parseVarDecl(){
         //could change this to take a parameter to make it more efficient
-        curCST.addNode("VarDecl" ,"branch");
+        curCST.addNode("VarDecl" ,"branch", currentToken.lineNum);
         matchAndConsume("type");
         matchAndConsume("identifier");
         curCST.endChildren();
     }
 
     function parseAssignmentStatement(){
-        curCST.addNode("AssignmentStatement" ,"branch");
+        curCST.addNode("AssignmentStatement" ,"branch", currentToken.lineNum);
         matchAndConsume("identifier");
         matchAndConsume("assign");
         parseExpr();
@@ -179,7 +179,7 @@
 
     function parseExpr(){
         var expressionLexeme = currentToken.kind;
-        curCST.addNode("Expression", "branch");
+        curCST.addNode("Expression", "branch", currentToken.lineNum);
         switch(expressionLexeme){
             case "digit":
                     parseIntExpr();
@@ -203,7 +203,7 @@
     }
 
     function parseIntExpr(){
-        curCST.addNode("IntExpr", "branch");
+        curCST.addNode("IntExpr", "branch", currentToken.lineNum);
         matchAndConsume("digit");
         if(currentToken.kind == "add"){
             matchAndConsume("add");
@@ -216,7 +216,7 @@
 
 
     function parseBooleanExpr(){
-        curCST.addNode("BooleanExpr" ,"branch");
+        curCST.addNode("BooleanExpr" ,"branch", currentToken.lineNum);
         //faulty error here
         if(currentToken.kind == "openParen"){
             matchAndConsume("openParen");
@@ -235,7 +235,7 @@
     }
 
     function parseStringExpr(){  
-        curCST.addNode("StringExpr" ,"branch");
+        curCST.addNode("StringExpr" ,"branch", currentToken.lineNum);
         if (currentToken.kind == "stringChar"){
             consumeStringChar();
         }else{
@@ -245,7 +245,7 @@
     }
 
     function consumeStringChar(){
-        curCST.addNode("StringChar" ,"branch");
+        curCST.addNode("StringChar" ,"branch", currentToken.lineNum);
         matchAndConsume("stringChar"); 
         parseStringExpr();
         curCST.endChildren();
@@ -254,7 +254,7 @@
     function matchAndConsume(expectedKind) {
         // Validate that we have the expected token kind and get the next token.
         if(!isParseError){
-            curCST.addNode(currentToken.lexeme, "leaf");
+            curCST.addNode(currentToken.lexeme, "leaf", currentToken.lineNum);
             //May need to change this to see if it's undefined
         switch(expectedKind) {  
             case "EOF":

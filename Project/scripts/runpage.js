@@ -34,16 +34,19 @@
                 if(isParseError){
                     document.getElementById("taCST").value = "Error found, CST(s) not completed."
                 }else{
+                    putMessage("\n"+"Creating CSTs..."+"\n");
                     var printCSTs = cstArr.join("");
                     document.getElementById("taCST").value = printCSTs.toString();
-                    semanticAnalysis(); //creates ASTs, symbol tables, and performs scope and type checking on CSTs.
-                    /*for(i = 0; i < cstArr.length; i++){
-                        workingCST = cstArr[i];
-                        traverseCST();
-                    }*/
+                    putMessage("\n"+"Created CST(s). Performing Semantic Analysis...");
+                    semanticAnalysis(); //creates ASTs, symbol tables, and performs scope and type checking on ASTs.
                     var printASTs = astArr.join("END OF PROGRAM \n \n");
-                    //could add the numbers with a for if I wanted but it's important just to know when a new program is processed.
                     document.getElementById("taAST").value = printASTs.toString();
+                    var symbolTables = ""; //Multiple STs is probably going to have to work like multiple ASTs
+                    for(i = 0; i < symbolTableArr.length; i++){
+                        var prog_num = i + 1;
+                         symbolTables += "Symbol Table: Program "+prog_num+symbolTableArr[i].toString();
+                    }
+                    document.getElementById("taST").value = symbolTables;
                 }  
         }else{
             putMessage("Error: No source code to compile.");
