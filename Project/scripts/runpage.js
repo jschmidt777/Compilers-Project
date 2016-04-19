@@ -44,11 +44,15 @@
                     document.getElementById("taAST").value = printASTs.toString();
                     putMessage("\n"+"Created AST(s).");
                     var symbolTables = ""; //Multiple STs is probably going to have to work like multiple ASTs
-                    for(i = 0; i < symbolTableArr.length; i++){
-                        var prog_num = i + 1;
-                         symbolTables += "Symbol Table: Program "+prog_num+symbolTableArr[i].toString();
+                    if(!isSemanticError){
+                        for(i = 0; i < symbolTableArr.length; i++){
+                            var prog_num = i + 1;
+                             symbolTables += "Symbol Table: Program "+prog_num+symbolTableArr[i].toString();
+                        }
+                        document.getElementById("taST").value = symbolTables;
+                    }else{
+                        document.getElementById("taST").value = "Symbol table(s) not produced due to a semantic error (see log below).";
                     }
-                    document.getElementById("taST").value = symbolTables;
                 }  
         }else{
             putMessage("Error: No source code to compile.");

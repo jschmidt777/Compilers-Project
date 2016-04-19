@@ -1,7 +1,7 @@
 //symbolTables.js
 //4/17/16
 
-
+var isSemanticError = false;
 var symbolTableArr = []; //keeps track of each symboltable for each program
 
 function createSymbolTable(num){
@@ -23,6 +23,11 @@ function symbTable(){
 			program_scope.level = level;
 			this.scopeArr.push(program_scope); 
 			this.workingScope = this.scopeArr[level]; //whenever there is a new scope created, it will be pointed to as the workingscope
+			if(program_scope.level > 0){
+				program_scope.parentScope = this.scopeArr[level-1];
+			}else{
+				program_scope.parentScope = null;
+			}
 			//scopes will be kept in order this way
 			//since a new scope will only be added if there's a new block 
 			//and there isn't a scope for that level already.
@@ -32,7 +37,7 @@ function symbTable(){
 	function scope(){
 		this.level = 0; //this is the level of scope
 		this.symbols = []; //the array of symbols associated with the scope
-		
+		this.parentScope = null;
 
 			this.createSymbol = function(type, id, linenum){
 			var scope_symbol = new symbol();
@@ -101,6 +106,7 @@ function symbTable(){
 							curSymbolTable.curScope++;
 							curSymbolTable.createScope(curSymbolTable.curScope);
 							checkBlockChildren();
+							curSymbolTable.workingScope = curSymbolTable.scopeArr[curSymbolTable.curScope-1];
 							curSymbolTable.curScope--;
 						}
 						
@@ -118,18 +124,25 @@ function symbTable(){
 										curSymbolTable.workingScope.createSymbol(curBlockChildren[count].children[0].name, curBlockChildren[count].children[1].name, curBlockChildren[count].children[1].linenum);
 										count++;
 										checkBlockChildren();
-									}else{
-										putMessage("Error on line: " +curBlockChildren[count].children[1].linenum +". Redeclared variable "+curBlockChildren[count].children[1].name+" in the same scope "+curSymbolTable.workingScope.level+".");
-										//isSemanticError
+									}else if(!result){
+										curBlockChildren = tempPtr;
+										putMessage("Error on line: " +curBlockChildren[count].children[1].linenum +". Redeclared variable: "+curBlockChildren[count].children[1].name+", in the same scope: "+curSymbolTable.workingScope.level+".");
+										isSemanticError = true;
 									}
 							}else if(curBlockChildren[count].name == "Assignment"){
 								var tempPtr = curBlockChildren;
 								curBlockChildren = curBlockChildren[count];
 								//curSymbolTable.workingScope.createSymbol(null, curBlockChildren[count].children[0].name, curBlockChildren[count].children[0].linenum);
-								checkAssignment();
-								curBlockChildren = tempPtr;
-								count++;
-								checkBlockChildren();
+								var result = checkAssignment();
+									if(result){
+										curBlockChildren = tempPtr;
+										count++;
+										checkBlockChildren();
+									}else if(!result){
+										curBlockChildren = tempPtr;
+										//putMessage("Error on line: " +curBlockChildren[count].children[0].linenum +". Undeclared variable: "+curBlockChildren[count].children[0].name+", in scope: "+curSymbolTable.workingScope.level+".");
+										isSemanticError = true;
+									}
 							}else if(curBlockChildren[count].name == "BLOCK"){
 								var tempPtr = curBlockChildren;
 								var temp = count;
@@ -140,10 +153,10 @@ function symbTable(){
 								count = temp;
 								count++;
 								checkBlockChildren();
-							}/*else{ //temporary... just wanted to see if this is doing what I think it's doing.
+							}else{ //Leave this INNNNNN. Until I add checks for other statements!
 								count++;
 								checkBlockChildren();
-							}*/
+							}
 						}
 						
 					}
@@ -151,66 +164,62 @@ function symbTable(){
 					var symbolCount = 0;
 
 					function checkVarDecl(){
-					if(curSymbolTable.workingScope.symbols.length > 0){// return ture if the length is zero for the symbols
-						alert("Hi!1");
-						if(curBlockChildren.children[1].name == curSymbolTable.workingScope.symbols[symbolCount].id){
-										alert("Hi!0");
-										return false;
-									}else if(symbolCount < curSymbolTable.workingScope.symbols.length) {
-										symbolCount++;
-										alert("Hi!2");
-										checkVarDecl();
-									}else{
-										alert("Hi!3");
-										symbolCount = 0;
-										return true;
-									}
+						if(curSymbolTable.workingScope.symbols.length > 0){// return ture if the length is zero for the symbols
+							var taLength = curSymbolTable.workingScope.symbols.length-1;
+							while(taLength >= 0){
+								if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
+									return false;
+								}else{
+									taLength--;
+								}
+							}
+							return true;
 						}else{
-							alert("Hi!4");
 							return true;
 						}
 					}
 
 					function checkAssignment(){
-						//Nested while loops? One for the scope, the other for symbol?
-						var taSymbol = curBlockChildren.children[0];
-						/*if(!curSymbolTable.workingScope.symbols.filter()){
-								if(lookToParentScopes(curBlockChildren.children[0])){
-									//We're good
-								}else{
-									putMessage("Error on line: "+ curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name +"." );
-								}		
-						}else if(curSymbolTable.workingScope.symbols.indexOf(curBlockChildren.children[0]) == -1){//has to change, indexOf doesn't work for this kind of shit
-							//we're good
-						}*/
-						/*for(i = 0; i < curSymbolTable.workingScope.symbols.length; i++){
-							if(curBlockChildren.children[0].name == curSymbolTable.workingScope.symbols[i].id){
-								if(!curSymbolTable.workingScope.symbols[i].isInitialized){
-									curSymbolTable.workingScope.symbols[i].isInitialized = true;
+						if(curSymbolTable.workingScope.symbols.length > 0){
+							var taLength = curSymbolTable.workingScope.symbols.length-1;
+							if(taLength > -1){	
+								while(taLength >= 0){
+									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
+										curSymbolTable.workingScope.symbols[taLength].isInitialized = true;
+										return true;
+									}else{
+										taLength--;
+									}
 								}
 							}else{
-
-							} 
-														
-						}*/
-						
-					}
-
-					var levelCount = 1;
-
-					function lookToParentScopes(id){
-						var parent = curSymbolTable.scopeArr[curSymbolTable.workingScope.level-levelCount];
-						if(parent != undefined){
-							var result = parent.symbols.indexOf(id); //has to change, indexOf doesn't work for this kind of shit
-							if(result > -1){
-								parent.symbols[result].isInitialized = true;
-								levelCount = 1;
-								return true;
-							}else{
-								levelCount++;
-								lookToParentScope(id);
+								return lookToParentScopes();
 							}
 						}else{
+							return lookToParentScopes();
+						}
+					}
+
+					var parent = curSymbolTable.workingScope.parentScope;
+
+					function lookToParentScopes(){
+						if(parent != undefined || parent != null){
+							var taLength = parent.symbols.length-1;
+							if(taLength > -1){		
+								while(taLength >= 0){
+									if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
+										parent.symbols[taLength].isInitialized = true;
+										parent = curSymbolTable.workingScope.parentScope;
+										return true;
+									}else{
+										taLength--;
+									}
+								}
+							}else{
+								parent = parent.parentScope;
+								lookToParentScopes();
+							}
+						}else if(parent == undefined || parent == null){
+							putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
 							return false;
 						}
 					}
@@ -224,7 +233,7 @@ function symbTable(){
 				var result = "";
 				for(i = 0; i < this.scopeArr.length; i++){
 					if(this.scopeArr[i].symbols.length == 0){
-						result += "\n"+"Scope" + i + "/ \n";
+						//Don't add anything to the result if there isn't a defined symbol in a scope.
 					}else{
 						result += "\n"+"Scope" + i + "/" +this.scopeArr[i].symbols + "\n";
 					}
