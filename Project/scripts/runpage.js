@@ -38,9 +38,11 @@
                     var printCSTs = cstArr.join("");
                     document.getElementById("taCST").value = printCSTs.toString();
                     putMessage("\n"+"Created CST(s). Performing Semantic Analysis...");
+                    putMessage("\n"+"Creating ASTs..."+"\n");
                     semanticAnalysis(); //creates ASTs, symbol tables, and performs scope and type checking on ASTs.
                     var printASTs = astArr.join("END OF PROGRAM \n \n");
                     document.getElementById("taAST").value = printASTs.toString();
+                    putMessage("\n"+"Created AST(s).");
                     var symbolTables = ""; //Multiple STs is probably going to have to work like multiple ASTs
                     for(i = 0; i < symbolTableArr.length; i++){
                         var prog_num = i + 1;

@@ -203,6 +203,16 @@ TC_1
     int a
     a = 1
     print(a)
+
+}$
+
+{
+    int a
+    a = 1
+    print(a)
+    int a
+    a = 2
+    
 }$
 
 TC_2
@@ -320,3 +330,16 @@ TC_5
         a = 3
     }
 } $
+
+
+{
+    
+    x = 1
+
+    {
+
+        int x
+        x = 2
+    }
+
+}$

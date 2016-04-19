@@ -33,6 +33,7 @@ function semanticAnalysis(){
 		curAST = astArr[workingCST.num-1];
 		curSymbolTable = symbolTableArr[workingCST.num-1];
 		traverseCST(); //Make the AST first, then do scope and type checking
+		putMessage("\n"+"Created AST for program " + workingCST.num +"\n");
 		curSymbolTable.scypeCheck();
 	}
 }
