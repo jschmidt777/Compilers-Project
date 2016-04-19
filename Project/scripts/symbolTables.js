@@ -140,7 +140,6 @@ function symbTable(){
 										checkBlockChildren();
 									}else if(!result){
 										curBlockChildren = tempPtr;
-										//putMessage("Error on line: " +curBlockChildren[count].children[0].linenum +". Undeclared variable: "+curBlockChildren[count].children[0].name+", in scope: "+curSymbolTable.workingScope.level+".");
 										isSemanticError = true;
 									}
 							}else if(curBlockChildren[count].name == "BLOCK"){
@@ -182,20 +181,25 @@ function symbTable(){
 					function checkAssignment(){
 						if(curSymbolTable.workingScope.symbols.length > 0){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
-							if(taLength > -1){	
+							//if(taLength > -1){	
 								while(taLength >= 0){
 									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
-										curSymbolTable.workingScope.symbols[taLength].isInitialized = true;
-										return true;
+										if(checkType(curSymbolTable.workingScope.symbols[taLength])){
+											return true;
+										}else{
+											return false;
+										}
+										/*curSymbolTable.workingScope.symbols[taLength].isInitialized = true;
+										return true;*/
 									}else{
 										taLength--;
+										if(taLength == -1){
+											lookToParentScopes();
+										}
 									}
 								}
-							}else{
-								return lookToParentScopes();
-							}
 						}else{
-							return lookToParentScopes();
+							lookToParentScopes();
 						}
 					}
 
@@ -222,6 +226,36 @@ function symbTable(){
 							putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
 							return false;
 						}
+					}
+
+
+					function checkType(id){
+						if(id.type == "int"){
+							if(curBlockChildren.children[1].name.match(integer)){
+								id.isInitialized = true;
+								return true;
+							}else{
+								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+								return false;
+							}
+						}else if(id.type == "string"){//will change to check for each type
+							if(curBlockChildren.children[1].name.match(string)){
+								id.isInitialized = true;
+								return true;
+							}else{
+								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
+								return false;
+							}
+						}else if(id.type == "boolean"){//will change to check for each type
+							if(curBlockChildren.children[1].name.match(boolval)){
+								id.isInitialized = true;
+								return true;
+							}else{
+								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type boolean does not match RHS type.");
+								return false;
+							}
+						}
+
 					}
 
 					function checkSymbolTable(){
