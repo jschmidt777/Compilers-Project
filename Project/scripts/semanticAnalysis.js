@@ -33,7 +33,7 @@ function semanticAnalysis(){
 		curAST = astArr[workingCST.num-1];
 		curSymbolTable = symbolTableArr[workingCST.num-1];
 		traverseCST(); //Make the AST first, then do scope and type checking
-		//curSymbolTable.scypeCheck();
+		curSymbolTable.scypeCheck();
 	}
 }
 
@@ -117,12 +117,10 @@ function traverseStatement(){
 
 //adds the children of the vardecl statment to the AST
 function traverseVarDecl(){
-	curAST.addNode(stmtPtr.name, "branch", stmtPtr.linenum);
 	var children = stmtPtr.children;
-	for(i = 0; i < children.length; i++){
-		curAST.addNode(children[i].name, "leaf", children[i].linenum);
-	}
-	//curSymbolTable.workingScope.createSymbol(children[0].name, children[1].name, children[1].linenum);//the scope for the symbol is added inherently in this method
+	curAST.addNode("VarDecl", "branch", children[0].linenum);
+	curAST.addNode(children[0].name, "leaf", children[0].linenum);
+	curAST.addNode(children[1].name, "leaf", children[1].linenum);
 	curAST.endChildren();
 }
 
@@ -263,7 +261,7 @@ function createString(){
 	var taOutputStr = "";
 	taOutputStr = taString.join("");
 	curAST.addNode(taOutputStr, "leaf", exprPtr.linenum);
-	taString = [];
+	taString = [];	
 	strExprPtr = null;
 	insideStr = false;
 }
