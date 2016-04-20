@@ -380,3 +380,72 @@ TC_5
     }
 
 }$
+
+{
+    int a
+    {
+        boolean b
+        {
+            string c
+            {
+            a = 5
+            b = false
+            c = "inta"
+            }
+            print(c)
+        }
+        print(b)
+    }
+    print(a)
+}$
+
+
+
+<BLOCK> 
+-<VarDecl> 
+--[int]
+--[x]
+-<Assignment> 
+--[x]
+--[0]
+-<While> 
+--<Equal> 
+---[true]
+---<NotEqual> 
+----[true]
+----<Equal> 
+-----[false]
+-----<NotEqual> 
+------[true]
+------<NotEqual> 
+-------[false]
+-------<NotEqual> 
+--------[x]
+--------[5]
+--<BLOCK> 
+---<Print> 
+----[x]
+---<Assignment> 
+----[x]
+----<Add> 
+-----[1]
+-----[x]
+
+
+<BLOCK> 
+-<VarDecl> 
+--[int]
+--[x]
+-<Assignment> 
+--[x]
+--[0]
+-<While> 
+--<NotEqual> 
+---[x]
+---[5]
+--<BLOCK> 
+---<Print> 
+----[x]
+---<Assignment> 
+----[x] 
+----[1]

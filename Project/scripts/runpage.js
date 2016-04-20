@@ -44,7 +44,7 @@
                     document.getElementById("taAST").value = printASTs.toString();
                     putMessage("\n"+"Created AST(s).");
                     var symbolTables = ""; //Multiple STs is probably going to have to work like multiple ASTs
-                    if(!isSemanticError){
+                    if(1==1){
                         for(i = 0; i < symbolTableArr.length; i++){
                             var prog_num = i + 1;
                              symbolTables += "Symbol Table: Program "+prog_num+symbolTableArr[i].toString();

@@ -26,7 +26,7 @@ function symbTable(){
 			if(program_scope.level > 0){
 				program_scope.parentScope = this.scopeArr[level-1];
 			}else{
-				program_scope.parentScope = null;
+				program_scope.parentScope = program_scope.parentScope;
 			}
 			//scopes will be kept in order this way
 			//since a new scope will only be added if there's a new block 
@@ -62,6 +62,7 @@ function symbTable(){
 					this.type = "";
 					this.scope = 0;
 					this.line = 0;
+					this.isUsed = false;
 					this.isInitialized = false;
 					this.toString = function(){
 						var result = "\tID:" + this.id + " TYPE:" + this.type + " LINE#:" + this.line +"\n";
@@ -76,12 +77,13 @@ function symbTable(){
 					var curBlock = null;
 					var curBlockChildren = null;
 					var foundRoot = false;
+					var alpha = /(a-z)/;
 					var string = /([a-z]| )/g;
 					var integer = /(\d)/;
 					var boolval = /(false|true)/;
 					var count = 0;
 					checkAST();
-					checkSymbolTable();
+					checkSymbolTableWarns();
 					//first, check if there is already an id of the same name declared (error)
 						//find the id when it was declared and assign the val
 						//only do so if the type is correct (error otherwise)
@@ -132,9 +134,37 @@ function symbTable(){
 							}else if(curBlockChildren[count].name == "Assignment"){
 								var tempPtr = curBlockChildren;
 								curBlockChildren = curBlockChildren[count];
-								//curSymbolTable.workingScope.createSymbol(null, curBlockChildren[count].children[0].name, curBlockChildren[count].children[0].linenum);
 								var result = checkAssignment();
 									if(result){
+										curBlockChildren = tempPtr;
+										count++;
+										checkBlockChildren();
+									}else if(!result){
+										curBlockChildren = tempPtr;
+										isSemanticError = true;
+									}
+							}else if(curBlockChildren[count].name == "Print"){
+								var tempPtr = curBlockChildren;
+								curBlockChildren = curBlockChildren[count];
+								var result = checkPrint();
+									if(result){
+										curBlockChildren = tempPtr;
+										count++;
+										checkBlockChildren();
+									}else if(!result){
+										curBlockChildren = tempPtr;
+										isSemanticError = true;
+									}
+							}else if(curBlockChildren[count].name == "If" || curBlockChildren[count].name == "While"){
+								var tempPtr = curBlockChildren;
+								curBlockChildren = curBlockChildren[count];
+								var result = checkIfOrWhile();
+									if(result){
+										var temp = count;
+										count = 1;
+										curBlockChildren = curBlockChildren.parent;
+										checkBlockChildren();
+										count = temp;
 										curBlockChildren = tempPtr;
 										count++;
 										checkBlockChildren();
@@ -160,10 +190,9 @@ function symbTable(){
 						
 					}
 
-					var symbolCount = 0;
 
 					function checkVarDecl(){
-						if(curSymbolTable.workingScope.symbols.length > 0){// return ture if the length is zero for the symbols
+						if(curSymbolTable.workingScope.symbols.length > 0){// return ttue if the length is zero for the symbols
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 							while(taLength >= 0){
 								if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
@@ -178,19 +207,77 @@ function symbTable(){
 						}
 					}
 
-					function checkAssignment(){
+					function checkPrint(){
+						if(curBlockChildren.children[0].name.match(/[a-z]/)){
+							return checkAssignment(); 
+						}else{
+							return true;
+						}
+					}
+
+					function checkIfOrWhile(){	
+							if(curBlockChildren.children[0].children[0].name.match(alpha)){
+								var tempPtr = curBlockChildren;
+								curBlockChildren = curBlockChildren.children[0];
+								checkAssignment();
+								curBlockChildren = tempPtr;
+									if(curBlockChildren.children[0].children[1].name.match(alpha)){
+										var tempPtr = curBlockChildren;
+										curBlockChildren = curBlockChildren.children[0];
+										checkAssignment();
+										curBlockChildren = tempPtr;
+									}else{
+										return true;
+									}
+							}
+							if(curBlockChildren.children[0].children[1].name.match(alpha)){
+								var tempPtr = curBlockChildren;
+								curBlockChildren = curBlockChildren.children[0];
+								checkAssignment();
+								curBlockChildren = tempPtr;
+							}else{
+								return true;
+							}
+						/*if(curBlockChildren.children[0].children[0].name.match(alpha)){
+							curBlockChildren = curBlockChildren.children[0].children[0];
+							checkAssignment();
+						}*/
+						/*if(!curBlockChildren.children[0].children[1].name.match(alpha)){
+							alert("Hi");
+							if(curBlockChildren.children[0].children[0].name.match(alpha)){
+								alert("Hi1");
+								checkAssignment();
+
+								if(curBlockChildren.children[0].children[1].children.length != 0){
+									curBlockChildren = curBlockChildren.children[0].children[1].children;
+									checkIforWhile();
+								}
+								
+							}
+								
+						}else if(curBlockChildren.children[0].children[1].name.match(alpha)){
+							checkAssignment();
+							if(curBlockChildren.children[0].children[0].name.match(alpha)){
+								return checkAssignment();
+							}
+						}*/
+					}
+
+					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statments
 						if(curSymbolTable.workingScope.symbols.length > 0){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
-							//if(taLength > -1){	
 								while(taLength >= 0){
 									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
-										if(checkType(curSymbolTable.workingScope.symbols[taLength])){
-											return true;
+										if(curBlockChildren.children[1] != undefined){
+											if(checkType(curSymbolTable.workingScope.symbols[taLength])){
+												return true;
+											}else{
+												return false;
+											}
 										}else{
-											return false;
+											curSymbolTable.workingScope.symbols[taLength].isUsed = true;
+											return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
 										}
-										/*curSymbolTable.workingScope.symbols[taLength].isInitialized = true;
-										return true;*/
 									}else{
 										taLength--;
 										if(taLength == -1){
@@ -204,15 +291,16 @@ function symbTable(){
 					}
 
 					var parent = curSymbolTable.workingScope.parentScope;
+					var tempParent = parent;
 
 					function lookToParentScopes(){
-						if(parent != undefined || parent != null){
+						if(parent != undefined){
 							var taLength = parent.symbols.length-1;
 							if(taLength > -1){		
 								while(taLength >= 0){
 									if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
-										parent.symbols[taLength].isInitialized = true;
-										parent = curSymbolTable.workingScope.parentScope;
+										//parent.symbols[taLength].isInitialized = true;
+										parent = tempParent;
 										return true;
 									}else{
 										taLength--;
@@ -222,7 +310,7 @@ function symbTable(){
 								parent = parent.parentScope;
 								lookToParentScopes();
 							}
-						}else if(parent == undefined || parent == null){
+						}else{
 							putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
 							return false;
 						}
@@ -230,9 +318,12 @@ function symbTable(){
 
 
 					function checkType(id){
+						//TODO: make function to handle the innards of these if's, and add in the type of the RHS.
 						if(id.type == "int"){
 							if(curBlockChildren.children[1].name.match(integer)){
+								//TODO: get this to work if there are more than one int (end can be either an id or an int)
 								id.isInitialized = true;
+								id.isUsed = true;
 								return true;
 							}else{
 								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
@@ -241,6 +332,7 @@ function symbTable(){
 						}else if(id.type == "string"){//will change to check for each type
 							if(curBlockChildren.children[1].name.match(string)){
 								id.isInitialized = true;
+								id.isUsed = true;
 								return true;
 							}else{
 								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
@@ -249,6 +341,7 @@ function symbTable(){
 						}else if(id.type == "boolean"){//will change to check for each type
 							if(curBlockChildren.children[1].name.match(boolval)){
 								id.isInitialized = true;
+								id.isUsed = true;
 								return true;
 							}else{
 								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type boolean does not match RHS type.");
@@ -258,8 +351,17 @@ function symbTable(){
 
 					}
 
-					function checkSymbolTable(){
-
+					function checkSymbolTableWarns(){
+						for(i = 0; i < curSymbolTable.scopeArr.length; i++){
+							for(j = 0; j < curSymbolTable.scopeArr[i].symbols.length; j++){
+								if(curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
+									putMessage("Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not initialized.");
+								}
+								if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false){
+									putMessage("Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not used.");
+								}
+							}
+						}
 					}
 	}
 
