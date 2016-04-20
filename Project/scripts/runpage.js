@@ -43,13 +43,10 @@
                     var printASTs = astArr.join("END OF PROGRAM \n \n");
                     document.getElementById("taAST").value = printASTs.toString();
                     putMessage("\n"+"Created AST(s).");
-                    var symbolTables = ""; //Multiple STs is probably going to have to work like multiple ASTs
-                    if(1==1){
-                        for(i = 0; i < symbolTableArr.length; i++){
-                            var prog_num = i + 1;
-                             symbolTables += "Symbol Table: Program "+prog_num+symbolTableArr[i].toString();
-                        }
-                        document.getElementById("taST").value = symbolTables;
+                    if(!isSemanticError){
+                        //var count = 1;
+                        var symbolTables = symbolTableArr.join("-----END OF TABLE-----\n "); //Multiple STs is probably going to have to work like multiple AST
+                        document.getElementById("taST").value = symbolTables.toString();
                     }else{
                         document.getElementById("taST").value = "Symbol table(s) not produced due to a semantic error (see log below).";
                     }
