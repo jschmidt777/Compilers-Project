@@ -65,8 +65,9 @@ function symbTable(){
 					this.line = 0;
 					this.isUsed = false;
 					this.isInitialized = false;
+					this.linesReferencedOn = [];
 					this.toString = function(){
-						var result = "\tID:" + this.id + " TYPE:" + this.type + " LINE#:" + this.line +"\n";
+						var result = "\tID:" + this.id + " TYPE:" + this.type + " LINE#:" + this.line +" LINES REFERNECED ON:" + this.linesReferencedOn+"\n";
 						return result;		
 					}
 				}
@@ -163,8 +164,7 @@ function symbTable(){
 									if(result){
 										var temp = count;
 										count = 1;
-										curBlockChildren = curBlockChildren.parent;
-										checkBlockChildren();
+										curBlockChildren = curBlockChildren.parent;//since I changed it in checkiforwhile										checkBlockChildren();
 										count = temp;
 										curBlockChildren = tempPtr;
 										count++;
@@ -217,28 +217,32 @@ function symbTable(){
 					}
 
 					function checkIfOrWhile(){	
-							if(curBlockChildren.children[0].children[0].name.match(alpha)){
-								var tempPtr = curBlockChildren;
-								curBlockChildren = curBlockChildren.children[0];
-								checkAssignment();
-								curBlockChildren = tempPtr;
+							if(curBlockChildren.children[0].children[0] != undefined){
+								if(curBlockChildren.children[0].children[0].name.match(alpha)){
+									var tempPtr = curBlockChildren;
+									curBlockChildren = curBlockChildren.children[0];
+									checkAssignment();
+									curBlockChildren = tempPtr;
+										if(curBlockChildren.children[0].children[1].name.match(alpha)){
+											var tempPtr = curBlockChildren;
+											curBlockChildren = curBlockChildren.children[0];
+											checkAssignment();
+											curBlockChildren = tempPtr;
+										}else{
+											return true;
+										}
+								}
+							}else if(curBlockChildren.children[0].children[1] != undefined){
 									if(curBlockChildren.children[0].children[1].name.match(alpha)){
 										var tempPtr = curBlockChildren;
 										curBlockChildren = curBlockChildren.children[0];
 										checkAssignment();
 										curBlockChildren = tempPtr;
-									}else{
-										return true;
 									}
-							}
-							if(curBlockChildren.children[0].children[1].name.match(alpha)){
-								var tempPtr = curBlockChildren;
-								curBlockChildren = curBlockChildren.children[0];
-								checkAssignment();
-								curBlockChildren = tempPtr;
 							}else{
 								return true;
 							}
+							
 						/*if(curBlockChildren.children[0].children[0].name.match(alpha)){
 							curBlockChildren = curBlockChildren.children[0].children[0];
 							checkAssignment();
@@ -269,6 +273,7 @@ function symbTable(){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 								while(taLength >= 0){
 									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
+										curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 										if(curBlockChildren.children[1] != undefined){
 											if(checkType(curSymbolTable.workingScope.symbols[taLength])){
 												return true;
@@ -281,11 +286,9 @@ function symbTable(){
 										}
 									}else{
 										taLength--;
-										if(taLength == -1){
-											lookToParentScopes();
-										}
 									}
 								}
+							lookToParentScopes();
 						}else{
 							lookToParentScopes();
 						}
@@ -299,54 +302,39 @@ function symbTable(){
 							var taLength = parent.symbols.length-1;	
 								while(taLength >= 0){
 									if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
-										//parent.symbols[taLength].isInitialized = true;
-										parent = tempParent;
+										//TYPECHECKparent.symbols[taLength].isInitialized = true;
+										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
+										reinitializeParent();
 										return true;
 									}else{
 										taLength--;
 									}
 								}
-								if(parent.parentScope == undefined){
-									lookToZeroScope();
-								}else{
-									parent = parent.parentScope;
-									if(parent == undefined){
-										lookToZeroScope();
-									}else{
-										lookToParentScopes();
-									}
-								}
+							parent = parent.parentScope;
+							lookToParentScopes();
 						}else if(parent == undefined){
-							/*var taLength = parent.symbols.length-1;
-							if(taLength > -1){		
-								while(taLength >= 0){
-									if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
-										//parent.symbols[taLength].isInitialized = true;
-										parent = tempParent;
-										return true;
-									}else{
-										taLength--;
-									}
-								}
-							}*/
-							lookToZeroScope();
-						}else{
-							putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
-							return false;
+						    	lookToZeroScope();
 						}
 					}
 
 					function lookToZeroScope(){
+						alert("hi");
 						var zeroScope = curSymbolTable.scopeArr[0];
 						for(i = 0; i < zeroScope.symbols.length; i++){
 							if(zeroScope.symbols[i].id == curBlockChildren.children[0].name){
-								parent = tempParent;
+								//TYPECHECK
+								zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[0].linenum);
+								reinitializeParent();
 								return true;
 							}else{
-							putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
-							return false;
+								putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
+								return false;
 							}
 						}
+					}
+
+					function reinitializeParent(){
+						parent = curSymbolTable.scopeArr[curSymbolTable.curScope].parentScope;
 					}
 
 
@@ -408,7 +396,7 @@ function symbTable(){
 					if(curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
 						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not initialized.");
 					}
-					if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false){
+					if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false || curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length == 0){
 						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not used.");
 					}
 				}

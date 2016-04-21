@@ -43,8 +43,9 @@
                     var printASTs = astArr.join("END OF PROGRAM \n \n");
                     document.getElementById("taAST").value = printASTs.toString();
                     putMessage("\n"+"Created AST(s).");
-                    if(1==1/*!isSemanticError*/){
+                    if(!semanticAnalysis){
                         //var count = 1;
+                        putMessage("\n"+"Creating Symbol Tables...")
                         var symbolTables = symbolTableArr.join("-----END OF TABLE-----\n "); //Multiple STs is probably going to have to work like multiple AST
                         document.getElementById("taST").value = symbolTables.toString();
                         //checkSymbolTableWarns();
