@@ -73,7 +73,7 @@ function traverseStatementlist(){
 			traverseStatement();
 			curBlock = stmtListPtr.children[1];
 			traverseStatementlist();
-			curAST.endChildren(); //This closes off the block 
+			//curAST.endChildren(); //This closes off the block 
 		}	
 }
 
