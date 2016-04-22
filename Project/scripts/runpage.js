@@ -8,8 +8,8 @@
     
 
     function init() {
-        // Clear the message box. Clear the CST Output.
-        document.getElementById("taOutput").value = "";
+        // TODO: with reset, Clear the message box. Clear the CST Output.
+        //document.getElementById("taOutput").value = "";
         // Set the initial values for the globals.
         tokenStream = [];
         tokens = "";
@@ -21,7 +21,7 @@
     function btnCompile_click() {     
         init();
         checkVerboseMode();
-        putMessage("Compilation Started");
+       document.getElementById("taOutput").value ="Compilation Started";
         // Grab the tokens from the lexer . . .
         tokens = lex();
         putMessage("\n" + "------------------------");
@@ -43,19 +43,19 @@
                     var printASTs = astArr.join("END OF PROGRAM \n \n");
                     document.getElementById("taAST").value = printASTs.toString();
                     putMessage("\n"+"Created AST(s).");
-                    if(!semanticAnalysis){
+                    if(!isSemanticError){
                         //var count = 1;
                         putMessage("\n"+"Creating Symbol Tables...")
                         var symbolTables = symbolTableArr.join("-----END OF TABLE-----\n "); //Multiple STs is probably going to have to work like multiple AST
                         document.getElementById("taST").value = symbolTables.toString();
-                        //checkSymbolTableWarns();
+                        checkSymbolTableWarns();
 
                     }else{
                         document.getElementById("taST").value = "Symbol table(s) not produced due to a semantic error (see log below).";
                     }
                 }  
         }else{
-            putMessage("Error: No source code to compile.");
+            putMessage("Error: No source code to compile.\n");
         }
 
         

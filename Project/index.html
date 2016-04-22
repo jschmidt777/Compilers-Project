@@ -20,13 +20,13 @@
         <table>
             <tr>
                 <td>
-                    <textarea id="taSourceCode" cols="32" rows="18"></textarea>
+                    <textarea id="taSourceCode" cols="32" rows="18" placeholder="Source Code Input"></textarea>
                 <td>
                     <textarea id="taCST" cols="32" rows="18">CST(s) Output</textarea>
                 <td>
                     <textarea id="taAST" cols="32" rows="18">AST(s) Output</textarea>
                 <td>
-                    <textarea id="taST" cols="42" rows="18">Symbol Table(s) Output</textarea>
+                    <textarea id="taST" cols="55" rows="18">Symbol Table(s) Output</textarea>
             <tr>
                 <td>
                     <br>
@@ -35,7 +35,17 @@
                     <input type="reset" value="Reload page" onClick="window.location.reload()">
                     <input type="radio" id="radioVerbose" name="veboseMode" value="Parse in Verbose Mode" unchecked> Parse in verbose mode
         </table>
-        <textarea id="taOutput" cols="90" rows="18">Compilation Log</textarea>
+
+        <table>
+            <tr>
+                <td>
+                    <textarea id="taOutput" cols="90" rows="18">Compilation Log Output</textarea>
+                <td>
+                <td>
+                <td>
+                    <textarea id="taCodeGen" cols="76" rows="18">Code Generation Output</textarea>
+        </table>
+        
     </div>
     <!-- Footer -->
     <p>

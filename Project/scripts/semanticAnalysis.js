@@ -22,23 +22,24 @@ var foundRoot = false;
 
 function semanticAnalysis(){
 	var cstsLength = cstArr.length;
-	for(i = cstsLength; i > 0; i--){
+	for(var i = 0; i < cstsLength ; i++){
 		workingCST = cstArr.shift();
 		if(workingCST != undefined){
 			createAST(workingCST.num);
 			createSymbolTable(workingCST.num);
 		}else{
-			break;
+			//break;
 		}
 		curAST = astArr[workingCST.num-1];
 		curSymbolTable = symbolTableArr[workingCST.num-1];
 		traverseCST(); //Make the AST first, then do scope and type checking
 		putMessage("\n"+"Created AST for program " + workingCST.num +"\n");
-		curSymbolTable.scypeCheck();
+		scypeCheck(); //looks at the current ST and recursively decend the AST to check semantics
+		//scope+type = scype so scypeCheck
 	}
 }
 
-function traverseCST(theCST){
+function traverseCST(){
 	foundRoot = false;
 	//The child of the root for any CST is going to be a block, so add that to the AST
 	traverseBlock();
@@ -50,14 +51,10 @@ function traverseBlock(){
 		curBlock = workingCST.root.children[0];
 		curAST.addNode("BLOCK", "branch", curBlock.linenum);
 		foundRoot = true;
-		//curSymbolTable.createScope(curSymbolTable.curScope); //The curScope is zero at this point.
 		traverseStatementlist();
 	}else{
 		curAST.addNode("BLOCK", "branch", curBlock.linenum);
-		//curSymbolTable.curScope++;
-		//curSymbolTable.createScope(curSymbolTable.curScope); //Already points at our new scope we create
 		traverseStatementlist();
-		//curSymbolTable.curScope--;
 		curAST.endChildren();
 	}
 }
@@ -147,6 +144,7 @@ function traverseAssignment(){
 		if (children[childPtr].name == "Expression"){
 			exprPtr = stmtPtr.children[childPtr]; 
 			traverseExpression();
+			//here?
 		}	
 	curAST.endChildren();
 }

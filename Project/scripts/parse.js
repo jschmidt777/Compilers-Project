@@ -54,18 +54,11 @@
         parseBlock();
         
         matchAndConsume("EOF");
-        /*document.getElementById("taCST").value = "";
-        document.getElementById("taCST").value += cst.toString() + "\n";
-        cst.root = null;
-        cst.cur = {};*/
         
         if (tokenIndex < tokens.length){
-            //document.getElementById("taCST").value += curCST.toString() + "\n";
             programCount++;
             createCST(programCount);
             curCST = cstArr[programCount-1];
-            //document.getElementById("taCST").value = "";
-            //document.getElementById("taCST").value += cst.toString() + "\n";
             parseProgram();
         }else{
         //Otherwise we're done
