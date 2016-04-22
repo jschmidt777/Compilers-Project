@@ -163,9 +163,12 @@ function symbTable(){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
 									checkIfOrWhile();
-									curBlockChildren = curBlockChildren[count].parent;
+									var temp = count;
+									count--;
+									curBlockChildren = curBlockChildren.children;
 									checkBlockChildren();
 									curBlockChildren = tempPtr;
+									count = temp;
 									count++;
 									checkBlockChildren();
 								}else if(curBlockChildren[count].name == "BLOCK"){
@@ -218,12 +221,12 @@ function symbTable(){
 
 					function checkIfOrWhile(){	
 							if(curBlockChildren.children[0].children[0] != undefined){
-								if(curBlockChildren.children[0].children[0].name.match(alpha)){
+								if(curBlockChildren.children[0].children[0].name.match(/[a-z]/)){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren.children[0];
 									checkAssignment();
 									curBlockChildren = tempPtr;
-										if(curBlockChildren.children[0].children[1].name.match(alpha)){
+										if(curBlockChildren.children[0].children[1].name.match(/[a-z]/)){
 											var tempPtr = curBlockChildren;
 											curBlockChildren = curBlockChildren.children[0];
 											checkAssignment();
@@ -306,10 +309,13 @@ function symbTable(){
 							var taLength = parent.symbols.length-1;	
 								while(taLength >= 0){
 									if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
-										parent.symbols[taLength].isInitialized = true; //TYPECHECK
 										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 										reinitializeParent();
-										return true;
+											if(checkType(parent.symbols[taLength])){
+												return true;
+											}else{
+												isSemanticError = true;
+											}
 									}else{
 										taLength--;
 									}
@@ -328,9 +334,12 @@ function symbTable(){
 							if(zeroScope.symbols[i].id == curBlockChildren.children[0].name){
 								//TYPECHECK
 								zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-								zeroScope.symbols[i].isInitialized = true;
 								reinitializeParent();
-								return true;
+								if(checkType(zeroScope.symbols[i])){
+									return true;
+								}else{
+									isSemanticError = true;
+								}
 							}else{
 								putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
 								isSemanticError = true;
@@ -340,45 +349,99 @@ function symbTable(){
 					}
 
 					function reinitializeParent(){
-						console.log(parent);
 						parent = curSymbolTable.workingScope;
-						console.log(parent);
-
 					}
 
-
+					var longIntPtr = null;
+					var isGoodInt = false;
+					
 					function checkType(id){
 						//TODO: make function to handle the innards of these if's, and add in the type of the RHS.
 						if(id.type == "int"){
-							if(curBlockChildren.children[1].name.match(integer) || curBlockChildren.children[1].type == "int"){
-								//TODO: get this to work if there are more than one int (end can be either an id or an int)
-								id.isInitialized = true;
-								id.isUsed = true;
-								return true;
+							//debugger;
+							if(curBlockChildren.children[1] != undefined){
+								if(curBlockChildren.children[1].name != "Add"){
+									if(curBlockChildren.children[1].name.match(integer)){ //if we assign the int to itself, it must be of the same type, so return true
+										if(curBlockChildren.children[1].name.match(integer) || curBlockChildren.children[1].type == "int"){
+											//TODO: get this to work if there are more than one int (end can be either an id or an int)
+											//if()
+											id.isInitialized = true;
+											id.isUsed = true;
+											return true;
+										}else{
+											putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+											return false;
+										}
+									}else{
+										return true;
+									}	
+								}else{
+									longIntPtr = curBlockChildren.children[1];
+									checkLongInt(id);
+									if(isGoodInt){
+										return true;
+									}else{
+										return false;
+									}
+								}
+									
 							}else{
-								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
-								return false;
-							}
+								return true; //got here from print most likely
+							}	
 						}else if(id.type == "string"){//will change to check for each type
-							if(curBlockChildren.children[1].name.match(string) || curBlockChildren.children[1].type == "string"){
-								id.isInitialized = true;
-								id.isUsed = true;
-								return  true;
+							if(curBlockChildren.children[1] != undefined){	
+								if(curBlockChildren.children[1].name.match(string) || curBlockChildren.children[1].type == "string"){
+									id.isInitialized = true;
+									id.isUsed = true;
+									return  true;
+								}else{
+									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
+									return false;
+								}
 							}else{
-								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
-								return false;
+								return true; //got here from print most likely
 							}
 						}else if(id.type == "boolean"){//will change to check for each type
-							if(curBlockChildren.children[1].name.match(boolval) || curBlockChildren.children[1].type == "boolean"){
-								id.isInitialized = true;
-								id.isUsed = true;
-								return  true;
+							if(curBlockChildren.children[1] != undefined){	
+								if(curBlockChildren.children[1].name.match(boolval) || curBlockChildren.children[1].type == "boolean"){
+									id.isInitialized = true;
+									id.isUsed = true;
+									return  true;
+								}else{
+									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type boolean does not match RHS type.");
+									return  false;
+								}
 							}else{
-								putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type boolean does not match RHS type.");
-								return  false;
+								return true;
 							}
 						}
 
+					}
+
+					function checkLongInt(id){
+						//debugger;
+						if(longIntPtr.children[0].name.match(integer)){
+							if(longIntPtr.children[1].name == "Add"){ 
+								longIntPtr = longIntPtr.children[1];
+								checkLongInt(id);
+							}else if(longIntPtr.children[1].name.match(/[a-z]/)){
+								if(id.type == "int"){
+										id.isInitialized = true;
+										id.isUsed = true;
+										isGoodInt = true;
+										return true;
+								}else{
+									putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+									return false;
+								}
+							}else if(longIntPtr.children[1].name.match(integer)){
+								isGoodInt = true;
+								return true;
+							}	
+						}else{
+							putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+							return false;
+						}
 					}
 
 					
@@ -390,10 +453,12 @@ function symbTable(){
 				for(j = 0; j < symbolTableArr[k].scopeArr[i].symbols.length; j++){
 					if(curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
 						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not initialized.");
-					}
-					if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false || curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length == 0){
+					}else if(curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length > 0 && curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
+						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is used before being initialized.");
+					}else if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false || curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length == 0){
 						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not used.");
 					}
+
 				}
 			}
 		}
