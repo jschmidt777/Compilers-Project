@@ -45,7 +45,7 @@
                     putMessage("\n"+"Created AST(s).");
                     if(!isSemanticError){
                         //var count = 1;
-                        putMessage("\n"+"Creating Symbol Tables...")
+                        putMessage("\n"+"Creating Symbol Tables...\n")
                         var symbolTables = symbolTableArr.join("-----END OF TABLE-----\n "); //Multiple STs is probably going to have to work like multiple AST
                         document.getElementById("taST").value = symbolTables.toString();
                         checkSymbolTableWarns();
