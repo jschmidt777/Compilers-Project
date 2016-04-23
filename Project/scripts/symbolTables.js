@@ -276,9 +276,9 @@ function symbTable(){
 					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statments
 						if(curSymbolTable.workingScope.symbols.length > 0){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
-								debugger;
+								//debugger;
 								while(taLength >= 0){
-									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
+									/*if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
 										curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 										if(curBlockChildren.children[1] != undefined){
 											if(checkType(curSymbolTable.workingScope.symbols[taLength])){
@@ -289,8 +289,8 @@ function symbTable(){
 										}else{
 											curSymbolTable.workingScope.symbols[taLength].isUsed = true;
 											return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
-										}
-									}else if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
+										}*/
+									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
 										curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 										if(curBlockChildren.children[1] != undefined){
 											if(checkType(curSymbolTable.workingScope.symbols[taLength])){

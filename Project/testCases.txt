@@ -401,54 +401,19 @@ TC_5
 
 
 
-<BLOCK> 
--<VarDecl> 
---[int]
---[x]
--<Assignment> 
---[x]
---[0]
--<While> 
---<Equal> 
----[true]
----<NotEqual> 
-----[true]
-----<Equal> 
------[false]
------<NotEqual> 
-------[true]
-------<NotEqual> 
--------[false]
--------<NotEqual> 
---------[x]
---------[5]
---<BLOCK> 
----<Print> 
-----[x]
----<Assignment> 
-----[x]
-----<Add> 
------[1]
------[x]
-
-
-<BLOCK> 
--<VarDecl> 
---[int]
---[x]
--<Assignment> 
---[x]
---[0]
--<While> 
---<NotEqual> 
----[x]
----[5]
---<BLOCK> 
----<Print> 
-----[x]
----<Assignment> 
-----[x] 
-----[1]
-
+{
+ int a
+ a = 1
+ {
+ int a
+ a = 2
+ print(a)
+ }
+ string b
+ b = "alan"
+ if (a == 1) {
+ print(b)
+ }
+}$
 
 

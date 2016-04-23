@@ -29,7 +29,7 @@
         putMessage("------------------------");
         putMessage("\n");
 
-        if (tokens != ""){
+        if (tokens.length > 0){
             parse();
                 if(isParseError){
                     document.getElementById("taCST").value = "Error found, CST(s) not completed."
@@ -54,7 +54,7 @@
                         document.getElementById("taST").value = "Symbol table(s) not produced due to a semantic error (see log below).";
                     }
                 }  
-        }else{
+        }else if(tokens.length == 0){
             putMessage("Error: No source code to compile.\n");
         }
 
