@@ -323,16 +323,16 @@ function symbTable(){
 								while(taLength >= 0){
 									if(parent.symbols[taLength].id == curBlockChildren.children[1].name){
 										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[1].linenum);
-										reinitializeParent();
 											if(checkType(parent.symbols[taLength])){
+												reinitializeParent(); //matters a lot that I do this here since I change parent. may not even need two checks here either
 												return true;
 											}else{
 												isSemanticError = true;
 											}
 									}else if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
 										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-										reinitializeParent();
 											if(checkType(parent.symbols[taLength])){
+												reinitializeParent();
 												return true;
 											}else{
 												isSemanticError = true;
@@ -356,7 +356,7 @@ function symbTable(){
 							if(zeroScope.symbols[i].id == curBlockChildren.children[0].name){
 								//TYPECHECK
 								zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-								reinitializeParent();
+								reinitializeParent(); //doesn't matter if I do this here
 								if(checkType(zeroScope.symbols[i])){
 									return true;
 								}else{
