@@ -157,7 +157,7 @@ function symbTable(){
 									curBlockChildren = curBlockChildren[count];
 									checkIfOrWhile();
 									var temp = count;
-									count--;
+									count = 1;
 									curBlockChildren = curBlockChildren.children;
 									checkBlockChildren();
 									curBlockChildren = tempPtr;
@@ -273,18 +273,22 @@ function symbTable(){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 								//debugger;
 								while(taLength >= 0){
-									/*if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
-										curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-										if(curBlockChildren.children[1] != undefined){
-											if(checkType(curSymbolTable.workingScope.symbols[taLength])){
-												return true;
+									if(curBlockChildren.children[1] != undefined){ //not sure if this works... or is needed. just need a wat to check the variable at the end of an int.
+										if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
+											curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
+											if(curBlockChildren.children[1] != undefined){
+												if(checkType(curSymbolTable.workingScope.symbols[taLength])){
+													return true;
+												}else{
+													isSemanticError = true;
+													return false;
+												}
 											}else{
-												isSemanticError = true;
+												curSymbolTable.workingScope.symbols[taLength].isUsed = true;
+												return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
 											}
-										}else{
-											curSymbolTable.workingScope.symbols[taLength].isUsed = true;
-											return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
-										}*/
+										}
+									}
 									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
 										curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 										if(curBlockChildren.children[1] != undefined){
@@ -314,33 +318,37 @@ function symbTable(){
 					var parent = curSymbolTable.workingScope;
 					var tempParent = parent;
 					function lookToParentScopes(){
-						if(parent.level != 0 ){ 
-							var taLength = parent.symbols.length-1;	
-								while(taLength >= 0){
-									if(parent.symbols[taLength].id == curBlockChildren.children[1].name){
-										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[1].linenum);
-											if(checkType(parent.symbols[taLength])){
-												reinitializeParent(); //matters a lot that I do this here since I change parent. may not even need two checks here either
-												return true;
+						if(parent != undefined){
+								if(parent.level != 0 ){ 
+									var taLength = parent.symbols.length-1;	
+										while(taLength >= 0){
+											if(parent.symbols[taLength].id == curBlockChildren.children[1].name){
+												parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[1].linenum);
+													if(checkType(parent.symbols[taLength])){
+														reinitializeParent(); //matters a lot that I do this here since I change parent. may not even need two checks here either
+														return true;
+													}else{
+														isSemanticError = true;
+														return false;
+													}
+											}else if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
+												parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
+													if(checkType(parent.symbols[taLength])){
+														reinitializeParent();
+														return true;
+													}else{
+														isSemanticError = true;
+														return false;
+													}
 											}else{
-												isSemanticError = true;
-												return false;
+												taLength--;
 											}
-									}else if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
-										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-											if(checkType(parent.symbols[taLength])){
-												reinitializeParent();
-												return true;
-											}else{
-												isSemanticError = true;
-												return false;
-											}
-									}else{
-										taLength--;
-									}
-								}
-							parent = parent.parentScope;
-							lookToParentScopes();
+										}
+									parent = parent.parentScope;
+									lookToParentScopes();
+							}else{
+								lookToZeroScope();
+							}
 						}else{
 							lookToZeroScope();
 						}
@@ -368,8 +376,8 @@ function symbTable(){
 							}else if(zeroScope.symbols[i].id == curBlockChildren.children[1].name){
 								//TYPECHECK
 								zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[1].linenum);
-								reinitializeParent();
 								if(checkType(zeroScope.symbols[i])){
+									reinitializeParent();
 									return true;
 								}else{
 									isSemanticError = true;
@@ -393,7 +401,7 @@ function symbTable(){
 					function checkType(id){
 						//TODO: make function to handle the innards of these if's, and add in the type of the RHS.
 						if(id.type == "int"){
-							//debugger;
+							debugger;
 							if(curBlockChildren.children[1] != undefined){
 								if(curBlockChildren.children[1].name != "Add"){
 									if(!curBlockChildren.children[1].name.match(/[a-z]/)){ 
@@ -407,13 +415,13 @@ function symbTable(){
 										}
 									}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].name == id.id){
 										return true;
-									}else if(curBlockChildren.children[1].id != id.id){
-										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
-										return false;
 									}else if(curBlockChildren.children[1].id == undefined){
 										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Undeclared variable: " +curBlockChildren.children[1].name+".");
 										return false;
-									}	
+									}else if(curBlockChildren.children[1].type != "int"){
+										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+										return false;
+									}
 								}else{
 									longIntPtr = curBlockChildren.children[1];
 									checkLongInt(id);
@@ -473,10 +481,20 @@ function symbTable(){
 									putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
 									return false;
 								}*/
-								var tempPtr = curBlockChildren;
+								/*var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
 								checkAssignment();
-								curBlockChildren = tempPtr;
+								curBlockChildren = tempPtr;*/
+								if(longIntPtr.children[1].type == "int"){
+									return true;
+								}else if(longIntPtr.children[1].id == undefined){
+									putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Undeclared variable: " +longIntPtr.children[1].name+".");
+									return false;
+								}else if(longIntPtr.children[1].type != "int"){
+										debugger;
+										putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+										return false;
+								}
 							}else if(longIntPtr.children[1].name == id.id){
 								isGoodInt = true;
 								return true;
