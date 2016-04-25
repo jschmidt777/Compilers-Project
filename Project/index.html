@@ -22,11 +22,11 @@
                 <td>
                     <textarea id="taSourceCode" cols="32" rows="18" placeholder="Source Code Input"></textarea>
                 <td>
-                    <textarea id="taCST" cols="32" rows="18">CST(s) Output</textarea>
+                    <textarea id="taCST" cols="32" rows="18" readonly>CST(s) Output</textarea>
                 <td>
-                    <textarea id="taAST" cols="32" rows="18">AST(s) Output</textarea>
+                    <textarea id="taAST" cols="32" rows="18" readonly>AST(s) Output</textarea>
                 <td>
-                    <textarea id="taST" cols="60" rows="18">Symbol Table(s) Output</textarea>
+                    <textarea id="taST" cols="60" rows="18" readonly>Symbol Table(s) Output</textarea>
             <tr>
                 <td>
                     <br>
@@ -39,12 +39,12 @@
         <table>
             <tr>
                 <td>
-                    <textarea id="taOutput" cols="90" rows="18">Compilation Log Output</textarea>
+                    <textarea id="taOutput" cols="90" rows="18" readonly>Compilation Log Output</textarea>
                 <td>
                 <td>
                 <td>
                 <td>
-                    <textarea id="taCodeGen" cols="81" rows="18">Code Generation Output</textarea>
+                    <textarea id="taCodeGen" cols="81" rows="18" readonly>Code Generation Output</textarea>
         </table>
         
     </div>
@@ -61,6 +61,7 @@
     <script type="text/javascript" src="scripts/createTree.js"></script><script type="text/javascript" src="scripts/parse.js"></script>	
     <script type="text/javascript" src="scripts/semanticAnalysis.js"></script>
     <script type="text/javascript" src="scripts/symbolTables.js"></script>
+    <script type="text/javascript" src="scripts/codeGen.js"></script>
     
     <script type="text/javascript" src="scripts/runpage.js"></script>
 </body>

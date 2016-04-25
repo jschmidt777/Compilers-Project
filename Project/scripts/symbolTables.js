@@ -192,6 +192,7 @@ function symbTable(){
 								if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
 									isSemanticError = true;
 									putMessage("Error on line: " +curBlockChildren.children[1].linenum +". Redeclared variable: "+curBlockChildren.children[1].name+", in the same scope: "+curSymbolTable.workingScope.level+".");
+									return false;
 								}else{
 									taLength--;
 								}
@@ -353,8 +354,8 @@ function symbTable(){
 							if(zeroScope.symbols[i].id == curBlockChildren.children[0].name){
 								//TYPECHECK
 								zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-								reinitializeParent(); //doesn't matter if I do this here
 								if(checkType(zeroScope.symbols[i])){
+									reinitializeParent(); 
 									return true;
 								}else{
 									isSemanticError = true;
