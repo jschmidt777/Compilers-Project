@@ -273,7 +273,7 @@ function symbTable(){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 								//debugger;
 								while(taLength >= 0){
-									if(curBlockChildren.children[1] != undefined){ //not sure if this works... or is needed. just need a wat to check the variable at the end of an int.
+									if(fromLongInt){ 
 										if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
 											curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 											if(curBlockChildren.children[1] != undefined){
@@ -287,23 +287,26 @@ function symbTable(){
 												curSymbolTable.workingScope.symbols[taLength].isUsed = true;
 												return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
 											}
+										}else{
+											taLength--;
 										}
-									}
-									if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
-										curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-										if(curBlockChildren.children[1] != undefined){
-											if(checkType(curSymbolTable.workingScope.symbols[taLength])){
-												return true;
+									}else if(!fromLongInt){
+										if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[0].name){
+											curSymbolTable.workingScope.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
+											if(curBlockChildren.children[1] != undefined){
+												if(checkType(curSymbolTable.workingScope.symbols[taLength])){
+													return true;
+												}else{
+													isSemanticError = true;
+													return false;
+												}
 											}else{
-												isSemanticError = true;
-												return false;
+												curSymbolTable.workingScope.symbols[taLength].isUsed = true;
+												return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
 											}
 										}else{
-											curSymbolTable.workingScope.symbols[taLength].isUsed = true;
-											return true; //get here from running this in print; we just want to see if the identifier we're printing is declared
+											taLength--;
 										}
-									}else{
-										taLength--;
 									}
 								}
 							parent = curSymbolTable.workingScope.parentScope;
@@ -322,24 +325,29 @@ function symbTable(){
 								if(parent.level != 0 ){ 
 									var taLength = parent.symbols.length-1;	
 										while(taLength >= 0){
-											if(parent.symbols[taLength].id == curBlockChildren.children[1].name){
-												parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[1].linenum);
-													if(checkType(parent.symbols[taLength])){
-														reinitializeParent(); //matters a lot that I do this here since I change parent. may not even need two checks here either
-														return true;
-													}else{
-														isSemanticError = true;
-														return false;
-													}
-											}else if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
-												parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
-													if(checkType(parent.symbols[taLength])){
-														reinitializeParent();
-														return true;
-													}else{
-														isSemanticError = true;
-														return false;
-													}
+											if(fromLongInt){
+												if(parent.symbols[taLength].id == curBlockChildren.children[1].name){
+														parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[1].linenum);
+														if(checkType(parent.symbols[taLength])){
+															reinitializeParent(); //matters a lot that I do this here since I change parent. may not even need two checks here either
+															return true;
+														}else{
+															isSemanticError = true;
+															return false;
+														}
+												}else{
+													taLength--;
+												}
+											}
+												if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
+														parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
+														if(checkType(parent.symbols[taLength])){
+															reinitializeParent();
+															return true;
+														}else{
+															isSemanticError = true;
+															return false;
+														}
 											}else{
 												taLength--;
 											}
@@ -355,7 +363,7 @@ function symbTable(){
 					}
 
 
-				function lookToZeroScope(){ //WARN: this might be weird if I get something weird...
+				function lookToZeroScope(){ 
 						//debugger;
 						var zeroScope = curSymbolTable.scopeArr[0];
 						for(i = 0; i < zeroScope.symbols.length; i++){
@@ -379,8 +387,13 @@ function symbTable(){
 										reinitializeParent(); 
 										return true;
 									}else{
-										isSemanticError = true;
-										return false;
+										if(isGoodInt){
+											return true;
+										}else{
+											isSemanticError = true;
+											return false;
+										}
+										
 									}
 								}
 							
@@ -388,9 +401,15 @@ function symbTable(){
 						}
 					//If we get out of the for loop without returning, then we have an error. This just says which one we actually output, depending how we got here.
 					if(fromLongInt){
-						putMessage("Error on line: " +curBlockChildren.children[1].linenum +". Undeclared variable: "+curBlockChildren.children[1].name+", in scope: "+curSymbolTable.curScope+".");
-						isSemanticError = true;
-						return false;
+						if(curBlockChildren.children[1].name.match(/^([a-zA-Z]| ){2,}$/)){//Think this may catch strings that are one letter but an error is thrown so yeah.
+							putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type string.");
+							isSemanticError = true;
+							return false;
+						}else if(curBlockChildren.children[1].name.match(/[a-z]/)){ 
+							putMessage("Error on line: " +curBlockChildren.children[1].linenum +". Undeclared variable: "+curBlockChildren.children[1].name+", in scope: "+curSymbolTable.curScope+".");
+							isSemanticError = true;
+							return false;
+						}
 					}else{
 						putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
 						isSemanticError = true;
@@ -427,11 +446,11 @@ function symbTable(){
 										}else{
 											return true;
 										}
+									}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].name != id.id){
+										fromLongInt = true; //might have to change this to make it more consitent i.e add another bool global for this sit.
+										checkAssignment();
 									}else if(curBlockChildren.children[1].id == undefined){
 										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Undeclared variable: " +curBlockChildren.children[1].name+".");
-										return false;
-									}else if(curBlockChildren.children[1].type != "int"){
-										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
 										return false;
 									}
 								}else{
@@ -441,6 +460,7 @@ function symbTable(){
 										fromLongInt = false; //done checking the int, so we need to reinitialize this so it can be used again.
 										return true;
 									}else{
+										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
 										return false;
 									}
 								}
@@ -450,7 +470,7 @@ function symbTable(){
 							}	
 						}else if(id.type == "string"){//will change to check for each type
 							if(curBlockChildren.children[1] != undefined){	
-								if(curBlockChildren.children[1].name.match(string) || curBlockChildren.children[1].type == "string"){
+								if(curBlockChildren.children[1].type == "string" || curBlockChildren.children[1].name.match(string)){
 									id.isInitialized = true;
 									id.isUsed = true;
 									return  true;
@@ -463,7 +483,7 @@ function symbTable(){
 							}
 						}else if(id.type == "boolean"){//will change to check for each type
 							if(curBlockChildren.children[1] != undefined){	
-								if(curBlockChildren.children[1].name.match(boolval) || curBlockChildren.children[1].type == "boolean"){
+								if(curBlockChildren.children[1].type == "boolean" || curBlockChildren.children[1].name.match(boolval)){
 									id.isInitialized = true;
 									id.isUsed = true;
 									return  true;
@@ -485,31 +505,12 @@ function symbTable(){
 								longIntPtr = longIntPtr.children[1];
 								checkLongInt(id);
 							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id){
-								/*if(id.type == "int"){
-										id.isInitialized = true;
-										id.isUsed = true;
-										isGoodInt = true;
-										return true;
-								}else{
-									putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
-									return false;
-								}*/
 								//debugger;
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
 								fromLongInt = true;
 								checkAssignment();
 								curBlockChildren = tempPtr;
-								/*if(longIntPtr.children[1].type == "int"){
-									return true;
-								}else if(longIntPtr.children[1].id == undefined){
-									putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Undeclared variable: " +longIntPtr.children[1].name+".");
-									return false;
-								}else if(longIntPtr.children[1].type != "int"){
-										debugger;
-										putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
-										return false;
-								}*/
 							}else if(longIntPtr.children[1].name == id.id){
 								isGoodInt = true;
 								return true;
@@ -522,11 +523,6 @@ function symbTable(){
 							return false;
 						}
 					}
-
-
-					function checkVarAssigned(variable){ //checks if the variable we are assigning is declared and of the same type
-
-					}
 					
 	}
 
@@ -535,11 +531,11 @@ function symbTable(){
 			for(i = 0; i < symbolTableArr[k].scopeArr.length; i++){
 				for(j = 0; j < symbolTableArr[k].scopeArr[i].symbols.length; j++){
 					if(curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
-						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not initialized.");
+						putMessage("Program "+k+" Warning: variable "+curSymbolTable.scopeArr[i].symbols[j].id+" on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not initialized.");
 					}else if(curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length > 0 && curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
-						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is used before being initialized.");
+						putMessage("Program "+k+" Warning: variable "+curSymbolTable.scopeArr[i].symbols[j].id+" on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is used before being initialized.");
 					}else if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false || curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length == 0){
-						putMessage("Program "+k+" Warning: variable on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not used.");
+						putMessage("Program "+k+" Warning: variable "+curSymbolTable.scopeArr[i].symbols[j].id+" on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not used.");
 					}
 
 				}
