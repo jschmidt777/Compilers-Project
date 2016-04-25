@@ -22,13 +22,13 @@ var foundRoot = false;
 
 function semanticAnalysis(){
 	var cstsLength = cstArr.length;
-	for(var i = 0; i < cstsLength ; i++){
+	for(var i = 0; i < cstsLength; i++){
 		workingCST = cstArr.shift();
 		if(workingCST != undefined){
 			createAST(workingCST.num);
 			createSymbolTable(workingCST.num);
 		}else{
-			//break;
+		
 		}
 		curAST = astArr[workingCST.num-1];
 		curSymbolTable = symbolTableArr[workingCST.num-1];

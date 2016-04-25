@@ -417,3 +417,7 @@ TC_5
 }$
 
 
+{
+    int a
+    a = "not an int"   
+}

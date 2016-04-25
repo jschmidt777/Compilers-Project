@@ -46,15 +46,6 @@ function symbTable(){
 				scope_symbol.type = type;
 				scope_symbol.id = id;
 				scope_symbol.scope = this.level;
-					/*if(scope_symbol.type == "string"){
-						scope_symbol.val = "";
-					}else if(scope_symbol.type == "int"){
-						scope_symbol.val = "";
-					}else if(scope_symbol.type == "boolean"){
-						scope_symbol.val = "";
-					}else{
-						//this should never be hit
-					}*/
 				scope_symbol.line = linenum;
 				this.symbols.push(scope_symbol);
 			}
@@ -113,6 +104,7 @@ function symbTable(){
 					//last, some kind of warn if the id is never used
 
 					function checkBlock(){
+						//debugger;
 						if(!foundRoot){
 							curBlock = curAST.root;
 							foundRoot = true;
@@ -133,6 +125,7 @@ function symbTable(){
 
 					
 					function checkBlockChildren(){
+						//debugger;
 						if(!isSemanticError){
 							if(count < curBlockChildren.length){
 								if(curBlockChildren[count].name == "VarDecl"){
@@ -274,6 +267,7 @@ function symbTable(){
 					
 
 					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statments
+						//debugger;
 						if(curSymbolTable.workingScope.symbols.length > 0){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 								//debugger;
@@ -297,6 +291,7 @@ function symbTable(){
 												return true;
 											}else{
 												isSemanticError = true;
+												return false;
 											}
 										}else{
 											curSymbolTable.workingScope.symbols[taLength].isUsed = true;
@@ -328,6 +323,7 @@ function symbTable(){
 												return true;
 											}else{
 												isSemanticError = true;
+												return false;
 											}
 									}else if(parent.symbols[taLength].id == curBlockChildren.children[0].name){
 										parent.symbols[taLength].linesReferencedOn.push(curBlockChildren.children[0].linenum);
@@ -336,6 +332,7 @@ function symbTable(){
 												return true;
 											}else{
 												isSemanticError = true;
+												return false;
 											}
 									}else{
 										taLength--;
@@ -361,6 +358,7 @@ function symbTable(){
 									return true;
 								}else{
 									isSemanticError = true;
+									return false;
 								}
 							}else if(zeroScope.symbols[i].id != curBlockChildren.children[1].name){
 								putMessage("Error on line: " +curBlockChildren.children[1].linenum +". Undeclared variable: "+curBlockChildren.children[1].name+", in scope: "+curSymbolTable.curScope+".");
@@ -374,6 +372,7 @@ function symbTable(){
 									return true;
 								}else{
 									isSemanticError = true;
+									return false;
 								}
 							}else if(zeroScope.symbols[i].id != curBlockChildren.children[0].name){
 								putMessage("Error on line: " +curBlockChildren.children[0].linenum +". Undeclared variable: "+curBlockChildren.children[0].name+", in scope: "+curSymbolTable.curScope+".");
@@ -406,12 +405,12 @@ function symbTable(){
 											return false;
 										}
 									}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].name == id.id){
-										return true;	
-									}else if(curBlockChildren.children[1].id == undefined){
-										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Undeclared variable: " +curBlockChildren.children[1].name+".");
-										return false;
+										return true;
 									}else if(curBlockChildren.children[1].id != id.id){
 										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
+										return false;
+									}else if(curBlockChildren.children[1].id == undefined){
+										putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Undeclared variable: " +curBlockChildren.children[1].name+".");
 										return false;
 									}	
 								}else{
