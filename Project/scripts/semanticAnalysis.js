@@ -259,7 +259,7 @@ function traverseStringExpr(){
 function createString(){
 	var taOutputStr = "";
 	taOutputStr = taString.join("");
-	curAST.addNode(taOutputStr, "leaf", exprPtr.linenum);
+	curAST.addNode(taOutputStr, "leaf", exprPtr.linenum, true);
 	taString = [];	
 	strExprPtr = null;
 	insideStr = false;

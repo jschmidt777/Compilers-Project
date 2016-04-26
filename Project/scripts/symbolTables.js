@@ -94,14 +94,7 @@ function symbTable(){
 					var boolval = /(false|true)/;
 					var count = 0;
 					checkBlock();
-					//first, check if there is already an id of the same name declared (error)
-						//find the id when it was declared and assign the val
-						//only do so if the type is correct (error otherwise)
-						//if there is more than one of this id in the symbols, error
-						//if the id isn't found, look back a scope and check if it was declared
-							//if it's there, assign it the val (error otherwise)
-					//then, check if the id being assigned to anything at all (warn)
-					//last, some kind of warn if the id is never used
+					
 
 					function checkBlock(){
 						//debugger;
@@ -140,10 +133,10 @@ function symbTable(){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
 									//debugger;
-										checkAssignment();
-										curBlockChildren = tempPtr;
-										count++;
-										checkBlockChildren();
+									checkAssignment();
+									curBlockChildren = tempPtr;
+									count++;
+									checkBlockChildren();
 								}else if(curBlockChildren[count].name == "Print"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
@@ -206,7 +199,7 @@ function symbTable(){
 					}
 
 					function checkPrint(){ //Fix so this sees that a declared var is referenced on whatever line this is on 
-						if(curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].name.length == 1){ //&& !curBlockChildren.children[0].name.match(string)
+						if(curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == false){ 
 							 	checkAssignment(); 
 						}else{
 							return true;
@@ -267,11 +260,9 @@ function symbTable(){
 
 					var fromLongInt = false;
 
-					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statments
-						//debugger;
+					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statements
 						if(curSymbolTable.workingScope.symbols.length > 0){
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
-								//debugger;
 								while(taLength >= 0){
 									if(fromLongInt){ 
 										if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
@@ -364,13 +355,11 @@ function symbTable(){
 
 
 				function lookToZeroScope(){ 
-						//debugger;
 						var zeroScope = curSymbolTable.scopeArr[0];
 						for(i = 0; i < zeroScope.symbols.length; i++){
 							if(fromLongInt){
 								if(zeroScope.symbols[i].id == curBlockChildren.children[1].name){
-								//TYPECHECK
-								zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[1].linenum);
+									zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[1].linenum);
 									if(checkType(zeroScope.symbols[i])){
 										reinitializeParent();
 										return true;
@@ -381,7 +370,6 @@ function symbTable(){
 								}
 							}else{
 								if(zeroScope.symbols[i].id == curBlockChildren.children[0].name){
-								//TYPECHECK
 									zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[0].linenum);
 									if(checkType(zeroScope.symbols[i])){
 										reinitializeParent(); 
@@ -401,11 +389,11 @@ function symbTable(){
 						}
 					//If we get out of the for loop without returning, then we have an error. This just says which one we actually output, depending how we got here.
 					if(fromLongInt){
-						if(curBlockChildren.children[1].name.match(/^([a-zA-Z]| ){2,}$/)){//Think this may catch strings that are one letter but an error is thrown so yeah.
+						if(curBlockChildren.children[1].name.match(/^([a-zA-Z]| ){1,}$/) && curBlockChildren.children[1].isString == true){//Think this may catch strings that are one letter but an error is thrown so yeah.
 							putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type string.");
 							isSemanticError = true;
 							return false;
-						}else if(curBlockChildren.children[1].name.match(/[a-z]/)){ 
+						}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].isString == undefined){ 
 							putMessage("Error on line: " +curBlockChildren.children[1].linenum +". Undeclared variable: "+curBlockChildren.children[1].name+", in scope: "+curSymbolTable.curScope+".");
 							isSemanticError = true;
 							return false;
@@ -417,6 +405,7 @@ function symbTable(){
 					}
 				}
 
+
 					function reinitializeParent(){
 						parent = curSymbolTable.workingScope;
 					}
@@ -427,7 +416,6 @@ function symbTable(){
 					function checkType(id){
 						//TODO: make function to handle the innards of these if's, and add in the type of the RHS.
 						if(id.type == "int"){
-							//debugger;
 							if(curBlockChildren.children[1] != undefined){
 								if(curBlockChildren.children[1].name != "Add"){
 									if(!curBlockChildren.children[1].name.match(/[a-z]/)){ 
@@ -468,7 +456,7 @@ function symbTable(){
 							}else{
 								return true; //got here from print most likely
 							}	
-						}else if(id.type == "string"){//will change to check for each type
+						}else if(id.type == "string"){
 							if(curBlockChildren.children[1] != undefined){	
 								if(curBlockChildren.children[1].type == "string" || curBlockChildren.children[1].name.match(string)){
 									id.isInitialized = true;
@@ -481,7 +469,7 @@ function symbTable(){
 							}else{
 								return true; //got here from print most likely
 							}
-						}else if(id.type == "boolean"){//will change to check for each type
+						}else if(id.type == "boolean"){
 							if(curBlockChildren.children[1] != undefined){	
 								if(curBlockChildren.children[1].type == "boolean" || curBlockChildren.children[1].name.match(boolval)){
 									id.isInitialized = true;
@@ -499,13 +487,11 @@ function symbTable(){
 					}
 
 					function checkLongInt(id){
-						//debugger;
 						if(longIntPtr.children[0].name.match(integer)){
 							if(longIntPtr.children[1].name == "Add"){ 
 								longIntPtr = longIntPtr.children[1];
 								checkLongInt(id);
 							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id){
-								//debugger;
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
 								fromLongInt = true;

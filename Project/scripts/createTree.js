@@ -35,12 +35,13 @@ function Tree() {
     // -- ------- --
 
     // Add a node: kind in {branch, leaf}.
-    this.addNode = function(name, kind, linenum) {
+    this.addNode = function(name, kind, linenum, isString) {
         // Construct the node object.
         var node = { name: name,
                      children: [],
                      parent: {},
-                     linenum:linenum
+                     linenum:linenum,
+                     isString:isString
                    };
 
         // Check to see if it needs to be the root node.
