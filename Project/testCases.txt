@@ -400,6 +400,10 @@ TC_5
 }$
 
 
+{
+    int a
+    a = "not an int"   
+}$
 
 {
  int a
@@ -417,10 +421,7 @@ TC_5
 }$
 
 
-{
-    int a
-    a = "not an int"   
-}$
+
 
 {
     int x
@@ -457,6 +458,22 @@ TC_5
     {
         int j
         j = 2
+        while (x != 5) 
+        {
+            print(x)
+            x = j
+        }
+    }
+   
+} $
+
+THROWS AN ERROR
+{
+    string x
+    x = "hi"
+    {
+        string j
+        j = "hello"
         while (x != 5) 
         {
             print(x)

@@ -428,6 +428,8 @@ function symbTable(){
 											return false;
 										}
 									}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].name == id.id){
+											id.isInitialized = true; //in case we got here from checking a long int expr, this will set that id to being used/ initialized
+											id.isUsed = true;
 										if(fromLongInt){ //this is just defensive in case we got something weird that could change the fromLongInt value.
 											isGoodInt = true;
 											return true;
