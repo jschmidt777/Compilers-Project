@@ -179,7 +179,7 @@ function symbTable(){
 
 
 					function checkVarDecl(){
-						if(curSymbolTable.workingScope.symbols.length > 0){// return ttue if the length is zero for the symbols
+						if(curSymbolTable.workingScope.symbols.length > 0){// return true if the length is zero for the symbols
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 							while(taLength >= 0){
 								if(curSymbolTable.workingScope.symbols[taLength].id == curBlockChildren.children[1].name){
@@ -198,9 +198,12 @@ function symbTable(){
 						}
 					}
 
-					function checkPrint(){ //Fix so this sees that a declared var is referenced on whatever line this is on 
-						if(curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == false){ 
-							 	checkAssignment(); 
+					function checkPrint(){ 
+						if(curBlockChildren.children[0].name == "Add"){
+								longIntPtr = curBlockChildren.children[0];
+								checkLongInt(); //returns true if the long integer we're printing is valid.
+						}else if(curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined){ 
+								checkAssignment(); 
 						}else{
 							return true;
 						}
@@ -258,7 +261,7 @@ function symbTable(){
 						}*/
 					}
 
-					var fromLongInt = false;
+					var fromLongInt = false; //value to determine if we are checking a longer integer, so 1+2+3 or 1+2+a, as examples.
 
 					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statements
 						if(curSymbolTable.workingScope.symbols.length > 0){
@@ -488,23 +491,29 @@ function symbTable(){
 
 					}
 
-					function checkLongInt(id){
+					function checkLongInt(id){ //when used with checkPrint, the id parameter is optional, so we will just be checking to see if there is a variable we need to check
 						if(longIntPtr.children[0].name.match(integer)){
 							if(longIntPtr.children[1].name == "Add"){ 
 								longIntPtr = longIntPtr.children[1];
 								checkLongInt(id);
-							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id){
+							}else if(longIntPtr.children[1].name.match(/[a-z]/) && id == undefined && longIntPtr.children[1].isString == undefined){ //must have gotten here from print, so check the variable
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
 								fromLongInt = true;
 								checkAssignment();
 								curBlockChildren = tempPtr;
+							}else if(longIntPtr.children[1].name.match(integer)){ //no way we get here without getting a defined id parameter
+								isGoodInt = true;
+								return true;
 							}else if(longIntPtr.children[1].name == id.id){
 								isGoodInt = true;
 								return true;
-							}else if(longIntPtr.children[1].name.match(integer)){
-								isGoodInt = true;
-								return true;
+							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id && longIntPtr.children[1].isString == undefined){ //no way we get here without getting a defined id parameter
+								var tempPtr = curBlockChildren;
+								curBlockChildren = longIntPtr;
+								fromLongInt = true;
+								checkAssignment();
+								curBlockChildren = tempPtr;
 							}
 						}else{
 							putMessage("Error on line: "+ longIntPtr.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type.");
