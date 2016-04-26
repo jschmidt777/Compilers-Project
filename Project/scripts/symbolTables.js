@@ -496,19 +496,25 @@ function symbTable(){
 							if(longIntPtr.children[1].name == "Add"){ 
 								longIntPtr = longIntPtr.children[1];
 								checkLongInt(id);
-							}else if(longIntPtr.children[1].name.match(/[a-z]/) && id == undefined && longIntPtr.children[1].isString == undefined){ //must have gotten here from print, so check the variable
+							}else if(longIntPtr.children[1].name.match(/[a-z]/) && id == undefined && longIntPtr.children[1].isString == undefined && !longIntPtr.children[1].name.match(boolval)){ //must have gotten here from print, so check the variable
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
 								fromLongInt = true;
 								checkAssignment();
 								curBlockChildren = tempPtr;
-							}else if(longIntPtr.children[1].name.match(integer)){ //no way we get here without getting a defined id parameter
+							}else if(longIntPtr.children[1].name.match(integer)){ 
 								isGoodInt = true;
 								return true;
-							}else if(longIntPtr.children[1].name == id.id){
+							}else if(longIntPtr.children[1].name.match(boolval)){ 
 								isGoodInt = true;
 								return true;
-							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id && longIntPtr.children[1].isString == undefined){ //no way we get here without getting a defined id parameter
+							}else if(longIntPtr.children[1].name.match(string) && longIntPtr.children[1].isString == true){ 
+								isGoodInt = true;
+								return true;
+							}else if(longIntPtr.children[1].name == id.id){//no way we get here without getting a defined id parameter
+								isGoodInt = true;
+								return true;
+							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id && longIntPtr.children[1].isString == undefined && !longIntPtr.children[1].name.match(boolval)){ //no way we get here without getting a defined id parameter
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
 								fromLongInt = true;
