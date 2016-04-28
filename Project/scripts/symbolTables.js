@@ -25,7 +25,7 @@ function symbTable(){
 			this.scopeArr.push(program_scope); 
 			this.workingScope = this.scopeArr[level]; //whenever there is a new scope created, it will be pointed to as the workingscope
 			if(program_scope.level > 0){
-				program_scope.parentScope = this.scopeArr[level-1];
+				program_scope.parentScope = this.scopeArr[level-1]; //floored?
 			}else{
 				program_scope.isZeroScope = true;
 			}
@@ -105,6 +105,8 @@ function symbTable(){
 							curBlockChildren = curBlock.children;
 							checkBlockChildren();
 						}else{
+							//may need to add a check here to add a scope change only if there's a block within a block
+							//and create a new scope of the curscope.subscopecount otherwise
 							curSymbolTable.curScope++;
 							curSymbolTable.createScope(curSymbolTable.curScope);
 							checkBlockChildren();

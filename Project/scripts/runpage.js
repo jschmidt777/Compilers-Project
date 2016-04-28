@@ -49,6 +49,13 @@
                         var symbolTables = symbolTableArr.join("-----END OF TABLE-----\n "); //Multiple STs is probably going to have to work like multiple AST
                         document.getElementById("taST").value = symbolTables.toString();
                         checkSymbolTableWarns();
+                        //codeGen()
+                        //debugger;
+                        createCodeBlocks();
+                        document.getElementById("taCodeGen").value = "";
+                        for(i = 0; i < codeArr.length; i++){
+                            document.getElementById("taCodeGen").value += "Program " +(i+1) +"\n" + codeArr[i].toString() +"\n\n";  
+                        }
 
                     }else{
                         document.getElementById("taST").value = "Symbol table(s) not produced due to a semantic error (see log below).";
