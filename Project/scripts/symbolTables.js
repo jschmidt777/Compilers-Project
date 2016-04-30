@@ -84,7 +84,7 @@ function symbTable(){
 }
 
 
-	function scypeCheck(){
+	function scypeCheck(){ //A recursive decent. TODO: Separate these functions out so this isn't a big god function.
 					var curBlock = null;
 					var curBlockChildren = null;
 					var foundRoot = false;
@@ -107,6 +107,7 @@ function symbTable(){
 						}else{
 							//may need to add a check here to add a scope change only if there's a block within a block
 							//and create a new scope of the curscope.subscopecount otherwise
+							//maybe just make a new scope each time, and just set it's parent?
 							curSymbolTable.curScope++;
 							curSymbolTable.createScope(curSymbolTable.curScope);
 							checkBlockChildren();
@@ -266,7 +267,7 @@ function symbTable(){
 					var fromLongInt = false; //value to determine if we are checking a longer integer, so 1+2+3 or 1+2+a, as examples.
 
 					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statements
-						if(curSymbolTable.workingScope.symbols.length > 0){
+						if(curSymbolTable.workingScope.symbols.length > 0 && curSymbolTable.workingScope.level != 0){ //want to fall through to look to zero scopes if we are already at zero scope
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
 								while(taLength >= 0){
 									if(fromLongInt){ 
@@ -381,6 +382,7 @@ function symbTable(){
 										return true;
 									}else{
 										if(isGoodInt){
+											fromLongInt = false;
 											return true;
 										}else{
 											isSemanticError = true;
@@ -465,10 +467,14 @@ function symbTable(){
 							}	
 						}else if(id.type == "string"){
 							if(curBlockChildren.children[1] != undefined){	
-								if(curBlockChildren.children[1].type == "string" || curBlockChildren.children[1].name.match(string)){
+								if(curBlockChildren.children[1].type == "string" || (curBlockChildren.children[1].name.match(string) && curBlockChildren.children[1].isString)){
 									id.isInitialized = true;
 									id.isUsed = true;
 									return  true;
+									//TODO: Add else if to check assignment if we assign a variable to a variable
+								}else if(fromLongInt){
+									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type string.");
+									return false;
 								}else{
 									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
 									return false;
@@ -478,10 +484,14 @@ function symbTable(){
 							}
 						}else if(id.type == "boolean"){
 							if(curBlockChildren.children[1] != undefined){	
-								if(curBlockChildren.children[1].type == "boolean" || curBlockChildren.children[1].name.match(boolval)){
+								if(curBlockChildren.children[1].type == "boolean" || (curBlockChildren.children[1].name.match(boolval) && curBlockChildren.children[1].isString == undefined)){
 									id.isInitialized = true;
 									id.isUsed = true;
 									return  true;
+									//TODO: Add else if to check assignment if we assign a variable to a variable
+								}else if(fromLongInt){
+									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type boolean.");
+									return  false;
 								}else{
 									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type boolean does not match RHS type.");
 									return  false;
@@ -508,14 +518,14 @@ function symbTable(){
 								isGoodInt = true;
 								return true;
 							}else if(longIntPtr.children[1].name.match(boolval)){ 
-								isGoodInt = true;
-								return true;
+								isGoodInt = false;
+								return false;
 							}else if(longIntPtr.children[1].name.match(string) && longIntPtr.children[1].isString == true){ 
-								isGoodInt = true;
-								return true;
+								isGoodInt = false;
+								return false;
 							}else if(longIntPtr.children[1].name == id.id){//no way we get here without getting a defined id parameter
-								isGoodInt = true;
-								return true;
+								isGoodInt = false;
+								return false;
 							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id && longIntPtr.children[1].isString == undefined && !longIntPtr.children[1].name.match(boolval)){ //no way we get here without getting a defined id parameter
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
@@ -539,7 +549,7 @@ function symbTable(){
 						putMessage("Program "+k+" Warning: variable "+curSymbolTable.scopeArr[i].symbols[j].id+" on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not initialized.");
 					}else if(curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length > 0 && curSymbolTable.scopeArr[i].symbols[j].isInitialized == false){
 						putMessage("Program "+k+" Warning: variable "+curSymbolTable.scopeArr[i].symbols[j].id+" on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is used before being initialized.");
-					}else if(curSymbolTable.scopeArr[i].symbols[j].isUsed == false || curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length == 0){
+					}else if(curSymbolTable.scopeArr[i].symbols[j].linesReferencedOn.length == 0){
 						putMessage("Program "+k+" Warning: variable "+curSymbolTable.scopeArr[i].symbols[j].id+" on line: "+curSymbolTable.scopeArr[i].symbols[j].line+" is not used.");
 					}
 

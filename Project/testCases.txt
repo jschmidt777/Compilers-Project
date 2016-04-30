@@ -203,7 +203,6 @@ TC_1
     int a
     a = 1
     print(a)
-
 }$
 
 {
@@ -482,3 +481,55 @@ THROWS AN ERROR
     }
    
 } $
+
+{ 
+    int a
+    string b
+    b = "bee"
+    {
+        int b
+        b = 1
+        a = b
+        print(b)
+        print(a)
+    }
+    print(b)
+}$
+
+{
+int a
+    {
+    string a
+    int b
+    b = a
+    }
+}$
+
+{
+    boolean b
+    b = "false"
+}$
+
+{
+    int a
+    a = 2 + "what"
+}$
+
+{
+ int a
+ int b
+ b = a
+}$
+
+{
+print(1)
+print(2)
+print(3)
+print(4)
+print(5)
+print(6)
+print(7)
+print(8)
+print(9)
+print(0)
+}$
