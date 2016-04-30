@@ -45,6 +45,7 @@
 					var integer = /(\d)/;
 					var boolval = /(false|true)/;
 					var count = 0;
+					var heapPtr = 255; //initialize to the end of the memory. FF.
 					//curByte = goToNextByte();
 					checkBlock();
 					
@@ -136,8 +137,42 @@
 							byteIndex++;
 							taCodeBlock.hexCode[byteIndex] = "FF";
 							byteIndex++;
-
+						}else if(curBlockChildren.children[0].name.match(string) && curBlockChildren.children[0].isString == true){
+							//A0 (hex mem location) A2 02 FF
+							taCodeBlock.hexCode[byteIndex] = "A0";
+							byteIndex++;
+							//mem location of the beginning of the string
+							taCodeBlock.hexCode[byteIndex] = generateString(curBlockChildren.children[0].name);
+							byteIndex++;
+							taCodeBlock.hexCode[byteIndex] = "A2";
+							byteIndex++;
+							taCodeBlock.hexCode[byteIndex] = "02";
+							byteIndex++;
+							taCodeBlock.hexCode[byteIndex] = "FF";
+							byteIndex++;
+							
 						}
+					}
+ 
+					function generateString(str){ //O(n). n based on the length of our string.
+						var hexLocale = 255; //the beginning of the string in the heap
+						var hex = "";
+						var stringPtr = heapPtr - str.length;
+						hexLocale = stringPtr.toString(16);
+						hexLocale = hexLocale.toUpperCase();
+							for(i = 0; i < str.length; i++) {
+								hex += str.charCodeAt(i).toString(16);
+							}
+						hex = hex.toUpperCase();
+						var hexString = hex.split(/(.{2})/); //split up the string after we convert it to hex, and put it in the heap.
+						hexString = hexString.filter(function(n){ return n != "" });
+							for(i = 0; i < hexString.length; i++) {
+								taCodeBlock.hexCode[stringPtr] = hexString[i];
+								stringPtr++;
+							}
+						//if we don't get a string with any length, we'll still move the pointer, just for consistency...
+						heapPtr = heapPtr - str.length - 1;
+						return hexLocale;
 					}
 		}
 
@@ -170,4 +205,6 @@
 
 //Convert ACII to hex
 
-// Hex values for 6502 commands and what they mean
+// Hex values for 6502 commands and what they mean?
+
+//Heap

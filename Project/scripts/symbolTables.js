@@ -23,12 +23,13 @@ function symbTable(){
 		var program_scope = new scope();
 			program_scope.level = level;
 			this.scopeArr.push(program_scope); 
-			this.workingScope = this.scopeArr[level]; //whenever there is a new scope created, it will be pointed to as the workingscope
 			if(program_scope.level > 0){
 				program_scope.parentScope = this.scopeArr[level-1]; //floored?
 			}else{
 				program_scope.isZeroScope = true;
 			}
+			this.workingScope = this.scopeArr[level]; //whenever there is a new scope created, it will be pointed to as the workingscope
+			
 			//scopes will be kept in order this way
 			//since a new scope will only be added if there's a new block 
 			//and there isn't a scope for that level already.
@@ -161,6 +162,7 @@ function symbTable(){
 									count++;
 									checkBlockChildren();
 								}else if(curBlockChildren[count].name == "BLOCK"){
+									debugger;
 									var tempPtr = curBlockChildren;
 									var temp = count;
 									curBlockChildren = curBlockChildren[count].children;
