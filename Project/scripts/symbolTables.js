@@ -162,7 +162,7 @@ function symbTable(){
 									count++;
 									checkBlockChildren();
 								}else if(curBlockChildren[count].name == "BLOCK"){
-									debugger;
+									//debugger;
 									var tempPtr = curBlockChildren;
 									var temp = count;
 									curBlockChildren = curBlockChildren[count].children;
@@ -182,7 +182,7 @@ function symbTable(){
 							
 					}
 
-
+					//SIMPLER SOLUTION TO SMALL SCOPE PROBLEM: If it's in the same scope, and the same block, it's an error, so check the block to see if the variable is redeclared.
 					function checkVarDecl(){
 						if(curSymbolTable.workingScope.symbols.length > 0){// return true if the length is zero for the symbols
 							var taLength = curSymbolTable.workingScope.symbols.length-1;
@@ -207,7 +207,14 @@ function symbTable(){
 						if(curBlockChildren.children[0].name == "Add"){
 								longIntPtr = curBlockChildren.children[0];
 								checkLongInt(); //returns true if the long integer we're printing is valid.
-						}else if(curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined){ 
+								if(isGoodInt){
+									return true;
+								}else{
+									putMessage("Error on line: "+ curBlockChildren.children[0].linenum + ", Type mismatch. Integer expression not valid.");
+									isSemanticError = true;
+									return false;
+								}
+						}else if(curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined && !curBlockChildren.children[0].name.match(boolval)){ 
 								checkAssignment(); 
 						}else{
 							return true;
@@ -526,8 +533,8 @@ function symbTable(){
 								isGoodInt = false;
 								return false;
 							}else if(longIntPtr.children[1].name == id.id){//no way we get here without getting a defined id parameter
-								isGoodInt = false;
-								return false;
+								isGoodInt = true;
+								return true;
 							}else if(longIntPtr.children[1].name.match(/[a-z]/) && longIntPtr.children[1].name != id.id && longIntPtr.children[1].isString == undefined && !longIntPtr.children[1].name.match(boolval)){ //no way we get here without getting a defined id parameter
 								var tempPtr = curBlockChildren;
 								curBlockChildren = longIntPtr;
