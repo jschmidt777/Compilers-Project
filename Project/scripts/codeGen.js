@@ -343,8 +343,8 @@
 						}
 						var highestScopeVar = possibleTemps[0]; //we will return the var with respect to the current scope; it's static, so we'll be using the variable most immediate in the code.
 						if(possibleTemps.length > 0){
-							for(i = 0; i < possibleTemps.length; i++){
-								if(possibleTemps[i].scope == curScope){
+							for(i = 0; i < possibleTemps.length; i++){ //don't really see a sit. where this won't work... hopefully!
+								if(possibleTemps[i].scope <= curScope){
 									highestScopeVar = possibleTemps[i];
 								}
 							}
