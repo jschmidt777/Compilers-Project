@@ -34,8 +34,6 @@
 	var taCodeBlock = null; //after we create the 256 byte blocks for each program, point to the first one 
 	//(or the only one if that's the case... there's no way we get this far without at least one valid program).
 
-	var curByte = null;  //FF: the end of the 256 byte block
-
 		function codeGen(){  //modify scypeCheck; recursively decend to traverse the AST one last time to see what code needs to be generated
 			//curAST resets after we make the symbol table(s)
 					var curBlock = null;
@@ -51,6 +49,7 @@
 					var fromPrint = false; //Don't use this...
 					var longIntPtr = null; //A very similar use in this function like it does in scypeCheck. 
 					var curScope = 0;
+					var varToVar = false; //when we assign a variable to another variable, we will change the child that is looked at in findTempVar()
 					checkBlock(); //fall into the recursion, and when we come out of it, backPatch.
 					backPatch();
 
@@ -86,6 +85,7 @@
 								}else if(curBlockChildren[count].name == "Assignment"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
+									debugger;
 									generateAssign();
 									curBlockChildren = tempPtr;
 									count++;
@@ -99,10 +99,22 @@
 									curBlockChildren = tempPtr;
 									count++;
 									checkBlockChildren();
-								}else if(curBlockChildren[count].name == "If" || curBlockChildren[count].name == "While"){
+								}else if(curBlockChildren[count].name == "If"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
-									//checkIfOrWhile();
+									//generateIfJump();
+									var temp = count;
+									count = 1;
+									curBlockChildren = curBlockChildren.children;
+									checkBlockChildren();
+									curBlockChildren = tempPtr;
+									count = temp;
+									count++;
+									checkBlockChildren();
+								}else if(curBlockChildren[count].name == "While"){
+									var tempPtr = curBlockChildren;
+									curBlockChildren = curBlockChildren[count];
+									//generateWhileJump();
 									var temp = count;
 									count = 1;
 									curBlockChildren = curBlockChildren.children;
@@ -265,7 +277,7 @@
 						}else if(curBlockChildren.children[0].name == "string"){
 							taCodeBlock.hexCode[byteIndex] = "A9"; //load accumulator with zero, then create temp var
 							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "00"; //Strings will get their reference when they are assigned. Otherwise, point to the last byte.
+							taCodeBlock.hexCode[byteIndex] = "FF"; //Strings will get their reference when they are assigned. Otherwise, point to the last byte.
 							byteIndex++;
 							taCodeBlock.hexCode[byteIndex] = "8D";
 							byteIndex++;
@@ -276,6 +288,7 @@
 							byteIndex++;
 						}
 					}
+
 
 					function generateAssign(){
 						if(curBlockChildren.children[1].name.match(integer)){
@@ -305,6 +318,22 @@
 							byteIndex++;
 							taCodeBlock.hexCode[byteIndex] = "XX";
 							byteIndex++;	
+						}else if(curBlockChildren.children[1].name.match(/([a-z])/) && curBlockChildren.children[1].isString == undefined){
+							taCodeBlock.hexCode[byteIndex] = "AD";
+							byteIndex++;
+							varToVar = true;
+							var taSecTempVar = findTempVar();    //The values are switched; the variable on the RHS is here.
+							taCodeBlock.hexCode[byteIndex] = taSecTempVar.temp;
+							byteIndex++;
+							taCodeBlock.hexCode[byteIndex] = "XX";
+							byteIndex++;
+							taCodeBlock.hexCode[byteIndex] = "8D";
+							byteIndex++;
+							var taFirstTempVar = findTempVar();  //The values are switched; the variable being assigned is here.
+							taCodeBlock.hexCode[byteIndex] = taFirstTempVar.temp;
+							byteIndex++;
+							taCodeBlock.hexCode[byteIndex] = "XX";
+							byteIndex++;
 						}else if(curBlockChildren.children[1].name.match(boolval) && curBlockChildren.children[1].isString == undefined){
 							if(curBlockChildren.children[1].name == "true"){
 								taCodeBlock.hexCode[byteIndex] = "A9"; 
@@ -334,22 +363,38 @@
 						}//TODO: Handle long ints in this case, like how I still have to do it for print...
 					}
 
+
+					function generateIfJump(){
+
+					}
+
+
 					function findTempVar(){ //these variables must exist (scope and type checking is successful at this point) so no need to check otherwise
+						//debugger;
 						var possibleTemps = [];
+						var taChild = 0;
+						if(varToVar){ //makes this dynamic, and possibly usable in other ways...
+							taChild = 1;
+						}else{
+							taChild = 0;
+						}
 						for(i = 0; i < taCodeBlock.tempTable.temps.length; i++){
-							if(curBlockChildren.children[0].name == taCodeBlock.tempTable.temps[i].variable){
+							if(curBlockChildren.children[taChild].name == taCodeBlock.tempTable.temps[i].variable){
 								possibleTemps.push(taCodeBlock.tempTable.temps[i]); //The "T" + n value of the variable
 							}
 						}
+						//How this may be modified if I need to fix my small scope problem: make new array and pop until I get the first match. Since they are added as the code comes, this will work, and will return the most recent definition
+						//IN A SCOPE THAT has the same level...
 						var highestScopeVar = possibleTemps[0]; //we will return the var with respect to the current scope; it's static, so we'll be using the variable most immediate in the code.
-						if(possibleTemps.length > 0){
-							for(i = 0; i < possibleTemps.length; i++){ //don't really see a sit. where this won't work... hopefully!
+						if(possibleTemps.length > 1){
+							for(i = 0; i < possibleTemps.length; i++){ //don't really see a sit. where this won't work... hopefully! 
 								if(possibleTemps[i].scope <= curScope){
 									highestScopeVar = possibleTemps[i];
 								}
 							}
 						}
-							
+
+						varToVar = false;
 						return highestScopeVar;
 					}
 
