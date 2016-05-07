@@ -72,6 +72,7 @@ function traverseStatementlist(){
 			traverseStatementlist();
 			//curAST.endChildren(); //This closes off the block 
 		}	
+		curAST.endChildren();
 }
 
 

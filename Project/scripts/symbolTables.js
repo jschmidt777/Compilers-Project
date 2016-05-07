@@ -172,7 +172,7 @@ function symbTable(){
 									count = temp;
 									//result = false;
 									count++;
-									checkBlockChildren();
+									//checkBlockChildren();
 								}else{ //Leave this INNNNNN. Until I add checks for other statements!
 									/*count++;
 									checkBlockChildren();*/

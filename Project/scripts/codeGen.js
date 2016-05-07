@@ -11,6 +11,7 @@
 		this.hexCode = new Array(256);
 		this.hexCode.fill("00", 0, 256);
 		this.tempTable = new tempVarTable();
+		this.jumpTable = new tempJumpTable();
 
 		this.toString = function(){
 			var outputHex = this.hexCode.join(" ");
@@ -85,7 +86,7 @@
 								}else if(curBlockChildren[count].name == "Assignment"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
-									debugger;
+									//debugger;
 									generateAssign();
 									curBlockChildren = tempPtr;
 									count++;
@@ -102,11 +103,21 @@
 								}else if(curBlockChildren[count].name == "If"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
-									//generateIfJump();
+									generateIfJump();
 									var temp = count;
 									count = 1;
 									curBlockChildren = curBlockChildren.children;
+									var beginJump = byteIndex;
 									checkBlockChildren();
+									var endJump = byteIndex;
+									var jumpCalc = endJump - beginJump;
+										if(jumpCalc <= 9){
+											jumpCalc = "0" + jumpCalc;
+										}else{
+											jumpCalc = jumpCalc.toString(16);
+											jumpCalc = jumpCalc.toUpperCase();
+										}
+									taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc;
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
@@ -132,7 +143,7 @@
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
-									checkBlockChildren();
+									//checkBlockChildren();
 								}else{ 
 
 								}
@@ -364,8 +375,77 @@
 					}
 
 
-					function generateIfJump(){
-
+					function generateIfJump(){  //it's going to work a little like in semantic analysis... if it's just a bool, gen for that, otherwise, gen the variable(s) and or the bool.
+						if(curBlockChildren.children[0] != undefined){
+								if(curBlockChildren.children[0].name.match(boolval) && curBlockChildren.children[1].isString == undefined){
+									if(curBlockChildren.children[0].name == "true"){
+										taCodeBlock.hexCode[byteIndex] = "A9"; 
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "01";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "8D";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, curBlockChildren.children[0].name, 0, curScope, false);
+										tempVarCount++;
+										byteIndex++;									//Essentially create a variable for true or false. Fine since it's only a byte in static space.
+										taCodeBlock.hexCode[byteIndex] = "XX";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "A2"; 
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "01";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "EC";
+										byteIndex++;
+										var taTempVar = findTempVar();
+										taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "XX";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "D0";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = createTempJump("J"+jumpCount);
+										jumpCount++;
+										byteIndex++;
+									}else if(curBlockChildren.children[0].name == "false"){
+										taCodeBlock.hexCode[byteIndex] = "A9"; 
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "01";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "8D";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, curBlockChildren.children[0].name, 0, curScope, false);
+										tempVarCount++;
+										byteIndex++;									//Essentially create a variable for true or false. Fine since it's only a byte in static space.
+										taCodeBlock.hexCode[byteIndex] = "XX";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "A2"; 
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "01";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "EC";
+										byteIndex++;
+										var taTempVar = findTempVar();
+										taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "XX";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = "D0";
+										byteIndex++;
+										taCodeBlock.hexCode[byteIndex] = createTempJump("J"+jumpCount);
+										jumpCount++;
+										byteIndex++;
+									}
+							}else if(curBlockChildren.children[0].children[1] != undefined){
+									if(curBlockChildren.children[0].children[1].name.match(alpha)){
+										var tempPtr = curBlockChildren;
+										curBlockChildren = curBlockChildren.children[0];
+										checkAssignment();
+										curBlockChildren = tempPtr;
+									}
+							}else{
+								
+							}
+						}
 					}
 
 
@@ -414,6 +494,14 @@
 								}
 							}
 						}
+
+						for(i = 0; i < taCodeBlock.jumpTable.jumps.length; i++){
+							for(j = 0; j < taCodeBlock.hexCode.length; j++){
+								if(taCodeBlock.hexCode[j] == taCodeBlock.jumpTable.jumps[i].jump){
+									taCodeBlock.hexCode[j] = taCodeBlock.jumpTable.jumps[i].distance;
+								}
+							}
+						}
 					}
 
 					function findStaticMem(){ //locate where we will begin the static space
@@ -432,6 +520,7 @@
 	
 	var tempVarCount = 0; //this is the number we will concatenate with "T" to make the entry in the temporary variable table
 	// RESET THIS WHEN WE HAVE MORE THAN ONE PROGRAM!
+	var jumpCount = 0;
 
 	//can just say add in the XX to the next byte after the temp is inserted
 	//taCodeBlock.tempTable.createTempVar("T"+tempVarCount, curBlockChildren.children[0].name);
@@ -440,6 +529,10 @@
 
 	function tempVarTable(){
 		this.temps = [];
+	}
+
+	function tempJumpTable(){
+		this.jumps = [];
 	}
 
 	function createTempVar(temp, variable, address, scope, isString){
@@ -453,12 +546,24 @@
 			return tempVariable.temp;
 	}
 
+	function createTempJump(jump){
+			temp_Jump = new tempJump();
+			temp_Jump.jump = jump;
+			taCodeBlock.jumpTable.jumps.push(temp_Jump);
+			return temp_Jump.jump;
+	}
+
 	function tempVar(){
 		this.temp = "";
 		this.variable = "";
 		this.address = 0;
 		this.scope = 0;
 		this.isString = false;
+	}
+
+	function tempJump(){
+		this.jump = "";
+		this.distance = "00";
 	}
 
 //Jump table
