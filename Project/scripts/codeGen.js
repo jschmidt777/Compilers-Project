@@ -103,7 +103,7 @@
 								}else if(curBlockChildren[count].name == "If"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
-									generateIfJump();
+									generateIfOrWhile();
 									var temp = count;
 									count = 1;
 									curBlockChildren = curBlockChildren.children;
@@ -125,11 +125,56 @@
 								}else if(curBlockChildren[count].name == "While"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
-									//generateWhileJump();
+									var beginWhile = byteIndex;
+									fromWhile = true;
+									generateIfOrWhile();
+									fromWhile = false;
 									var temp = count;
 									count = 1;
+									var beginJump = byteIndex;
 									curBlockChildren = curBlockChildren.children;
-									checkBlockChildren();
+									checkBlockChildren(); //We'll have to do something similar for calculating the jump here, and add some code for getting back to the while if the condition is still true.
+									var endJump = byteIndex;
+									var jumpCalc = endJump - beginJump;
+										if(jumpCalc <= 9){
+											jumpCalc = "0" + jumpCalc;
+										}else{
+											jumpCalc = jumpCalc.toString(16);
+											jumpCalc = jumpCalc.toUpperCase();
+										}
+									taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc*2;
+									taCodeBlock.hexCode[byteIndex] = "A2"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "00";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; //load accumulator with zero, then create temp var
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01"; //Initialize ints to zero and booleans to false. 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "alwaysTrue", 0, curScope, false); 
+									tempVarCount++;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0";
+									byteIndex++;
+									var whileJumpCalc = 256 - beginWhile + 2;
+									if(whileJumpCalc <= 9){
+											whileJumpCalc = "0" + whileJumpCalc;
+										}else{
+											whileJumpCalc = whileJumpCalc.toString(16);
+											whileJumpCalc = whileJumpCalc.toUpperCase();
+										}
+									taCodeBlock.hexCode[byteIndex] = whileJumpCalc;
+									byteIndex++;
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
@@ -375,9 +420,9 @@
 					}
 
 
-					function generateIfJump(){  //it's going to work a little like in semantic analysis... if it's just a bool, gen for that, otherwise, gen the variable(s) and or the bool.
+					function generateIfOrWhile(){  //it's going to work a little like in semantic analysis... if it's just a bool, gen for that, otherwise, gen the variable(s) and or the bool.
 						if(curBlockChildren.children[0] != undefined){
-								if(curBlockChildren.children[0].name.match(boolval) && curBlockChildren.children[1].isString == undefined){
+								if(curBlockChildren.children[0].name.match(boolval) && curBlockChildren.children[0].isString == undefined){
 									if(curBlockChildren.children[0].name == "true"){
 										taCodeBlock.hexCode[byteIndex] = "A9"; 
 										byteIndex++;
@@ -435,14 +480,14 @@
 										jumpCount++;
 										byteIndex++;
 									}
-							}else if(curBlockChildren.children[0].children[1] != undefined){
-									if(curBlockChildren.children[0].children[1].name.match(alpha)){
-										var tempPtr = curBlockChildren;
-										curBlockChildren = curBlockChildren.children[0];
-										checkAssignment();
-										curBlockChildren = tempPtr;
-									}
-							}else{
+							}else if(curBlockChildren.children[0].name == "Equal"){
+								var tempPtr = curBlockChildren;
+								curBlockChildren = curBlockChildren.children[0];
+								if((curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined) && (curBlockChildren.children[1].name.match(/([a-z])/) && curBlockChildren.children[1].isString == undefined)){
+
+								}
+									//A9 00 8D 4E 00 D0 05 A9 01 8D 4E 00 A2 00 EC 4E 00 D0 05 A9 00 8D 4E 00 A2 01 EC 4E 00 
+							}else if(curBlockChildren.children[0].name == "NotEqual"){
 								
 							}
 						}
@@ -546,9 +591,10 @@
 			return tempVariable.temp;
 	}
 
-	function createTempJump(jump){
+	function createTempJump(jump, distance){
 			temp_Jump = new tempJump();
 			temp_Jump.jump = jump;
+			temp_Jump.distance = distance;
 			taCodeBlock.jumpTable.jumps.push(temp_Jump);
 			return temp_Jump.jump;
 	}
