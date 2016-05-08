@@ -107,17 +107,19 @@
 									var temp = count;
 									count = 1;
 									curBlockChildren = curBlockChildren.children;
-									var beginJump = byteIndex;
-									checkBlockChildren();
-									var endJump = byteIndex;
-									var jumpCalc = endJump - beginJump;
-										if(jumpCalc <= 9){
-											jumpCalc = "0" + jumpCalc;
-										}else{
-											jumpCalc = jumpCalc.toString(16);
-											jumpCalc = jumpCalc.toUpperCase();
-										}
-									taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc;
+									if(!isCodeGenError){
+										var beginJump = byteIndex;
+										checkBlockChildren();
+										var endJump = byteIndex;
+										var jumpCalc = endJump - beginJump;
+											if(jumpCalc <= 9){
+												jumpCalc = "0" + jumpCalc;
+											}else{
+												jumpCalc = jumpCalc.toString(16);
+												jumpCalc = jumpCalc.toUpperCase();
+											}
+										taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc;
+									}
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
@@ -126,23 +128,23 @@
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
 									var beginWhile = byteIndex;
-									fromWhile = true;
 									generateIfOrWhile();
-									fromWhile = false;
 									var temp = count;
 									count = 1;
 									var beginJump = byteIndex;
 									curBlockChildren = curBlockChildren.children;
 									checkBlockChildren(); //We'll have to do something similar for calculating the jump here, and add some code for getting back to the while if the condition is still true.
-									var endJump = byteIndex;
-									var jumpCalc = endJump - beginJump;
-										if(jumpCalc <= 9){
-											jumpCalc = "0" + jumpCalc;
-										}else{
-											jumpCalc = jumpCalc.toString(16);
-											jumpCalc = jumpCalc.toUpperCase();
-										}
-									taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc*2;
+									if(!isCodeGenError){
+										var endJump = byteIndex;
+										var jumpCalc = endJump - beginJump;
+											if(jumpCalc <= 9){
+												jumpCalc = "0" + jumpCalc;
+											}else{
+												jumpCalc = jumpCalc.toString(16);
+												jumpCalc = jumpCalc.toUpperCase();
+											}
+										taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc*2;
+									}
 									taCodeBlock.hexCode[byteIndex] = "A2"; 
 									byteIndex++;
 									taCodeBlock.hexCode[byteIndex] = "00";
@@ -166,7 +168,7 @@
 									byteIndex++;
 									taCodeBlock.hexCode[byteIndex] = "D0";
 									byteIndex++;
-									var whileJumpCalc = 256 - beginWhile + 2;
+									var whileJumpCalc = 256 - (byteIndex - beginWhile) -1;
 									if(whileJumpCalc <= 9){
 											whileJumpCalc = "0" + whileJumpCalc;
 										}else{
@@ -188,7 +190,7 @@
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
-									//checkBlockChildren();
+									checkBlockChildren();
 								}else{ 
 
 								}
@@ -316,7 +318,7 @@
 								checkLongInt(id);
 					}*/
 
-					function generateVariable(){ //if it's we have a new variable of the same name, it must be in a different scope, so note that (MAKE NEW VAR FOR IT)
+					function generateVariable(){ //if we have a new variable of the same name, it must be in a different scope, so note that (MAKE NEW VAR FOR IT)
 						if(curBlockChildren.children[0].name == "int" || curBlockChildren.children[0].name == "boolean"){
 							//debugger;
 							taCodeBlock.hexCode[byteIndex] = "A9"; //load accumulator with zero, then create temp var
@@ -421,7 +423,6 @@
 
 
 					function generateIfOrWhile(){  //it's going to work a little like in semantic analysis... if it's just a bool, gen for that, otherwise, gen the variable(s) and or the bool.
-						if(curBlockChildren.children[0] != undefined){
 								if(curBlockChildren.children[0].name.match(boolval) && curBlockChildren.children[0].isString == undefined){
 									if(curBlockChildren.children[0].name == "true"){
 										taCodeBlock.hexCode[byteIndex] = "A9"; 
@@ -483,12 +484,182 @@
 							}else if(curBlockChildren.children[0].name == "Equal"){
 								var tempPtr = curBlockChildren;
 								curBlockChildren = curBlockChildren.children[0];
-								if((curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined) && (curBlockChildren.children[1].name.match(/([a-z])/) && curBlockChildren.children[1].isString == undefined)){
-
+								if((curBlockChildren.children[0].name.match(string) && curBlockChildren.children[0].isString == true) || (curBlockChildren.children[1].name.match(string) && curBlockChildren.children[1].isString == true) || curBlockChildren.children[0].name == "\""){
+										putMessage("Error on line " + curBlockChildren.children[0].linenum + ". String comparisons is not supported. Can compare for same reference pointer of strings.");
+										isCodeGenError = true;
+										return false;
+								}else if((curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined) && (curBlockChildren.children[1].name.match(/([a-z])/) && curBlockChildren.children[1].isString == undefined)){
+									taCodeBlock.hexCode[byteIndex] = "AE"; 
+									byteIndex++;
+									var taFirstTempVar = findTempVar();  
+									taCodeBlock.hexCode[byteIndex] = taFirstTempVar.temp;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									varToVar = true;
+									var taSecTempVar = findTempVar();  
+									taCodeBlock.hexCode[byteIndex] = taSecTempVar.temp;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "00";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "BNECheck", 0, curScope, false);
+									tempVarCount++;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "05";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A2"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "00";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "05";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "00";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A2"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = createTempJump("J"+jumpCount);
+									jumpCount++;
+									byteIndex++;
+									curBlockChildren = tempPtr;
 								}
 									//A9 00 8D 4E 00 D0 05 A9 01 8D 4E 00 A2 00 EC 4E 00 D0 05 A9 00 8D 4E 00 A2 01 EC 4E 00 
+									//A9 01 8D 4E 00 D0 05 A9 00 8D 4E 00 A2 01 EC 4E 00 D0 05 A9 01 8D 4E 00
 							}else if(curBlockChildren.children[0].name == "NotEqual"){
-								
+								var tempPtr = curBlockChildren;
+								curBlockChildren = curBlockChildren.children[0];
+								if((curBlockChildren.children[0].name.match(string) && curBlockChildren.children[0].isString == true) || (curBlockChildren.children[1].name.match(string) && curBlockChildren.children[1].isString == true) || curBlockChildren.children[0].name == "\""){
+										putMessage("Error on line " + curBlockChildren.children[0].linenum + ". String comparison is not supported. Can compare for same reference pointer of strings.");
+										isCodeGenError = true;
+										return false;
+								}else if((curBlockChildren.children[0].name.match(/([a-z])/) && curBlockChildren.children[0].isString == undefined) && (curBlockChildren.children[1].name.match(/([a-z])/) && curBlockChildren.children[1].isString == undefined)){
+									taCodeBlock.hexCode[byteIndex] = "AE"; 
+									byteIndex++;
+									var taFirstTempVar = findTempVar();  
+									taCodeBlock.hexCode[byteIndex] = taFirstTempVar.temp;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									varToVar = true;
+									var taSecTempVar = findTempVar();  
+									taCodeBlock.hexCode[byteIndex] = taSecTempVar.temp;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++; 					
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "BNECheck", 0, curScope, false);
+									tempVarCount++;
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "05";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "00";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A2"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "05";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A9"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "8D";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "A2"; 
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "EC";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the temp called BNECheck most recently created.
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "XX";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = "D0";
+									byteIndex++;
+									taCodeBlock.hexCode[byteIndex] = createTempJump("J"+jumpCount);
+									jumpCount++;
+									byteIndex++;
+									curBlockChildren = tempPtr;
 							}
 						}
 					}
@@ -567,11 +738,6 @@
 	// RESET THIS WHEN WE HAVE MORE THAN ONE PROGRAM!
 	var jumpCount = 0;
 
-	//can just say add in the XX to the next byte after the temp is inserted
-	//taCodeBlock.tempTable.createTempVar("T"+tempVarCount, curBlockChildren.children[0].name);
-	//tempVarCount++;
-	//calculate the static pointer at some point so we know where we're putting these in the memory.
-
 	function tempVarTable(){
 		this.temps = [];
 	}
@@ -611,8 +777,6 @@
 		this.jump = "";
 		this.distance = "00";
 	}
-
-//Jump table
 
 
 

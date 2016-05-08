@@ -57,9 +57,14 @@
                         curByte = taCodeBlock.hexCode[byteIndex];
                         codeGen();
                         document.getElementById("taCodeGen").value = "";
-                        for(i = 0; i < codeArr.length; i++){
+                        if(!isCodeGenError){ 
+                            for(i = 0; i < codeArr.length; i++){
                             document.getElementById("taCodeGen").value += "Program " +(i+1) +"\n" + codeArr[i].toString() +"\n\n";  
+                            }
+                        }else{
+                            document.getElementById("taCodeGen").value = "Code Block(s) not produced due to a code generation error (see log oriented left).";
                         }
+                       
 
                     }else{
                         document.getElementById("taST").value = "Symbol table(s) not produced due to a semantic error (see log below).";

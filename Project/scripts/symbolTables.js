@@ -60,7 +60,7 @@ function symbTable(){
 					this.isInitialized = false;
 					this.linesReferencedOn = [];
 					this.toString = function(){
-						var result = "\tID:" + this.id + " TYPE:" + this.type + " LINE#:" + this.line +" LINES REFERENCED ON:" + this.linesReferencedOn+"\n";
+						var result = "\tID:" + this.id + " TYPE:" + this.type + " LINE#:" + this.line +"\n";//+" LINES REFERENCED ON:" + this.linesReferencedOn;
 						return result;		
 					}
 				}
@@ -172,7 +172,7 @@ function symbTable(){
 									count = temp;
 									//result = false;
 									count++;
-									//checkBlockChildren();
+									checkBlockChildren();
 								}else{ //Leave this INNNNNN. Until I add checks for other statements!
 									/*count++;
 									checkBlockChildren();*/
@@ -274,6 +274,8 @@ function symbTable(){
 					}
 
 					var fromLongInt = false; //value to determine if we are checking a longer integer, so 1+2+3 or 1+2+a, as examples.
+					var fromString = false;
+					var fromBool = false;
 
 					function checkAssignment(){ //checks the assignment of an identifier, and not just the assignment statements
 						if(curSymbolTable.workingScope.symbols.length > 0 && curSymbolTable.workingScope.level != 0){ //want to fall through to look to zero scopes if we are already at zero scope
@@ -372,7 +374,7 @@ function symbTable(){
 				function lookToZeroScope(){ 
 						var zeroScope = curSymbolTable.scopeArr[0];
 						for(i = 0; i < zeroScope.symbols.length; i++){
-							if(fromLongInt){
+							if(fromLongInt || fromString){
 								if(zeroScope.symbols[i].id == curBlockChildren.children[1].name){
 									zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[1].linenum);
 									if(checkType(zeroScope.symbols[i])){
@@ -390,7 +392,9 @@ function symbTable(){
 										reinitializeParent(); 
 										return true;
 									}else{
-										if(isGoodInt){
+										if(isGoodInt || fromString || fromBool){
+											fromString = false;
+											fromBool = false;
 											fromLongInt = false;
 											return true;
 										}else{
@@ -480,13 +484,17 @@ function symbTable(){
 									id.isInitialized = true;
 									id.isUsed = true;
 									return  true;
-									//TODO: Add else if to check assignment if we assign a variable to a variable
+								}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].name != id.id){
+										fromString = true;
+										checkAssignment();
 								}else if(fromLongInt){
 									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type string.");
 									return false;
-								}else{
+								}else if(!fromString){
 									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
 									return false;
+								}else{
+									return true;
 								}
 							}else{
 								return true; //got here from print most likely
@@ -497,7 +505,9 @@ function symbTable(){
 									id.isInitialized = true;
 									id.isUsed = true;
 									return  true;
-									//TODO: Add else if to check assignment if we assign a variable to a variable
+								}else if(curBlockChildren.children[1].name.match(/[a-z]/) && curBlockChildren.children[1].name != id.id){
+										fromBool = true;
+										checkAssignment();
 								}else if(fromLongInt){
 									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type int does not match RHS type boolean.");
 									return  false;
