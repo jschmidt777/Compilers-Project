@@ -51,6 +51,8 @@
 					var longIntPtr = null; //A very similar use in this function like it does in scypeCheck. 
 					var curScope = 0;
 					var varToVar = false; //when we assign a variable to another variable, we will change the child that is looked at in findTempVar()
+					var jumpPtr = 0; //tracks which temp jump we're pointing at
+					var tempArr = []; //the temps we're adding to the variable/last int for generateAdd... which is a to do. TODO: make this usable for when we end with an int.
 					checkBlock(); //fall into the recursion, and when we come out of it, backPatch.
 					backPatch();
 
@@ -118,7 +120,8 @@
 												jumpCalc = jumpCalc.toString(16);
 												jumpCalc = jumpCalc.toUpperCase();
 											}
-										taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc;
+										taCodeBlock.jumpTable.jumps[jumpPtr].distance = jumpCalc;
+										jumpPtr++;
 									}
 									curBlockChildren = tempPtr;
 									count = temp;
@@ -132,19 +135,21 @@
 									generateIfOrWhile();
 									var temp = count;
 									count = 1;
-									var beginJump = byteIndex;
-									curBlockChildren = curBlockChildren.children;
-									checkBlockChildren(); //We'll have to do something similar for calculating the jump here, and add some code for getting back to the while if the condition is still true.
 									if(!isCodeGenError){
+										var beginJump = byteIndex;
+										curBlockChildren = curBlockChildren.children;
+										checkBlockChildren(); //We'll have to do something similar for calculating the jump here, and add some code for getting back to the while if the condition is still true.
 										var endJump = byteIndex;
 										var jumpCalc = endJump - beginJump;
+										jumpCalc = jumpCalc * 2;
 											if(jumpCalc <= 9){
 												jumpCalc = "0" + jumpCalc;
 											}else{
 												jumpCalc = jumpCalc.toString(16);
 												jumpCalc = jumpCalc.toUpperCase();
 											}
-										taCodeBlock.jumpTable.jumps[taCodeBlock.jumpTable.jumps.length-1].distance = jumpCalc*2;
+										taCodeBlock.jumpTable.jumps[jumpPtr].distance = jumpCalc;
+										jumpPtr++;
 									}
 									taCodeBlock.hexCode[byteIndex] = "A2"; 
 									byteIndex++;
@@ -259,8 +264,7 @@
 								byteIndex++;
 							}
 						}else if(curBlockChildren.children[taChild].name == "Add"){ //get variables working first, then do this.
-								/*longIntPtr = curBlockChildren.children[taChild];
-								generateAdd(curBlockChildren.children[taChild]);*/ //fall into some recursion, just like we're checking long int
+								 //fall into some recursion, just like we're checking long int
 								//TODO: Once I get variables working, make sure that this function accounts for variables too.
 						}else if(curBlockChildren.children[taChild].name.match(/[a-z]/) && curBlockChildren.children[taChild].isString == undefined && !curBlockChildren.children[taChild].name.match(boolval)){
 							taCodeBlock.hexCode[byteIndex] = "AC"; 
@@ -284,8 +288,99 @@
 						}
 					}
 
- 
-					function generateString(str){ //O(n). n based on the length of our string.
+// A9 02 8D 38 00 A9 04 8D 39 00 A9 05 8D 3A 00 A9 00 6D 36 00 6D 3A 00 6D 39 00 6D 38 00 8D 3B 00 AD 3B 00 8D 37 00 
+		function generateAdd(){ 
+			if(longIntPtr.children[0].name.match(integer)){
+				if(longIntPtr.children[1].name == "Add"){ 
+					taCodeBlock.hexCode[byteIndex] = "A9";
+					byteIndex++;
+					var taInt = "0"+longIntPtr.children[0].name;
+					taCodeBlock.hexCode[byteIndex] = taInt;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "8D";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "add"+taInt, 0, curScope, false); 
+					tempArr.push("T"+tempVarCount);
+					tempVarCount++;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					longIntPtr = longIntPtr.children[1];
+					generateAdd();
+				}else if(longIntPtr.children[1].name.match(/([a-z])/)){   //this variable has to be valid...
+					taCodeBlock.hexCode[byteIndex] = "A9";
+					byteIndex++;
+					var taInt = "0"+longIntPtr.children[0].name;
+					taCodeBlock.hexCode[byteIndex] = taInt;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "8D";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "add"+taInt, 0, curScope, false); 
+					tempArr.push("T"+tempVarCount);
+					tempVarCount++;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "A9";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "00";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "6D";
+					byteIndex++;
+					var tempPtr = curBlockChildren;
+					varToVar = true;
+					curBlockChildren = longIntPtr;
+					var taAssignTempVar = findTempVar();
+					taCodeBlock.hexCode[byteIndex] = taAssignTempVar.temp;
+					byteIndex++;
+					curBlockChildren = tempPtr;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "6D";
+					byteIndex++;
+					tempArrPtr = tempArr.length-1;
+						for(i=0; i < tempArr.length; i++){
+							if(tempArrPtr != 0){
+								taCodeBlock.hexCode[byteIndex] = tempArr[tempArrPtr];
+								tempArrPtr--;
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "XX";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "6D";
+								byteIndex++;
+							}else if(tempArrPtr == 0){
+								taCodeBlock.hexCode[byteIndex] = tempArr[tempArrPtr];
+								tempArrPtr--;
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "XX";
+								byteIndex++;
+							}
+						}
+					taCodeBlock.hexCode[byteIndex] = "8D";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "addResult", 0, curScope, false); 
+					tempVarCount++;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "AD";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the most recently created variable: the addResult above.
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "8D";
+					byteIndex++;
+					var taTempVar = findTempVar();
+					taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+				}
+			}
+		}
+
+			function generateString(str){ //O(n). n based on the length of our string.
 						var hexLocale = 255; //the beginning of the string in the heap; defaulted to the end of the heap.
 						var hex = "";
 						var stringPtr = heapPtr - str.length;
@@ -312,13 +407,7 @@
 					}
 
 
-					/*function generateAdd(id){ //change this
-						if(longIntPtr.children[0].name.match(integer)){
-							if(longIntPtr.children[1].name == "Add"){ 
-								longIntPtr = longIntPtr.children[1];
-								checkLongInt(id);
-					}*/
-
+					
 					function generateVariable(){ //if we have a new variable of the same name, it must be in a different scope, so note that (MAKE NEW VAR FOR IT)
 						if(curBlockChildren.children[0].name == "int" || curBlockChildren.children[0].name == "boolean"){
 							//debugger;
@@ -364,6 +453,9 @@
 							byteIndex++;
 							taCodeBlock.hexCode[byteIndex] = "XX";
 							byteIndex++;
+						}else if(curBlockChildren.children[1].name == "Add"){
+							longIntPtr = curBlockChildren.children[1];
+							generateAdd();
 						}else if(curBlockChildren.children[1].name.match(string) && curBlockChildren.children[1].isString == true){
 							taCodeBlock.hexCode[byteIndex] = "A9";
 							byteIndex++;
@@ -419,12 +511,12 @@
 								taCodeBlock.hexCode[byteIndex] = "XX";
 								byteIndex++;
 							}
-						}//TODO: Handle long ints in this case, like how I still have to do it for print...
+						}
 					}
 
 
 					function generateIfOrWhile(){  //it's going to work a little like in semantic analysis... if it's just a bool, gen for that, otherwise, gen the variable(s) and or the bool.
-								if(curBlockChildren.children[0].name.match(boolval) && curBlockChildren.children[0].isString == undefined && curBlockChildren.children[1] == undefined){
+								if(curBlockChildren.children[0].name.match(boolval) && curBlockChildren.children[0].isString == undefined){
 									if(curBlockChildren.children[0].name == "true"){
 										taCodeBlock.hexCode[byteIndex] = "A9"; 
 										byteIndex++;
@@ -912,6 +1004,7 @@
 						for(i = 0; i < taCodeBlock.jumpTable.jumps.length; i++){
 							for(j = 0; j < taCodeBlock.hexCode.length; j++){
 								if(taCodeBlock.hexCode[j] == taCodeBlock.jumpTable.jumps[i].jump){
+									//debugger;
 									taCodeBlock.hexCode[j] = taCodeBlock.jumpTable.jumps[i].distance;
 								}
 							}
