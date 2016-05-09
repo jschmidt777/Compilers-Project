@@ -581,3 +581,19 @@ if(a!=b){
    print(a)
   }
 }$
+
+{
+
+    int b
+    b = 1 + 2 + 3 + 4
+        print(b)
+        print(1+2+3)
+        print(1+2+6)
+        print(1 + b)
+        int a
+        a = 6
+        print(4 + 5 + a)
+        print("yassssss")
+  
+
+} $

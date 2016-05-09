@@ -48,6 +48,7 @@
 					var heapPtr = 255; //initialize to the end of the memory. FF.
 					var longIntPtr = null; //A very similar use in this function like it does in scypeCheck. Recursively generate the add with this as the pointer.
 					var curScope = 0;
+					var fromPrint = false;
 					var varToVar = false; //when we assign a variable to another variable, we will change the child that is looked at in findTempVar()
 					var jumpPtr = 0; //tracks which temp jump we're pointing at
 					var tempArr = []; //the temps we're adding to the variable/last int for generateAdd... which is a to do. TODO: make this usable for when we end with an int.
@@ -204,30 +205,30 @@
 					function generatePrint(){
 						var taChild = 0; //No real reason for this, but I'm leaving it in for now.
 						if(curBlockChildren.children[taChild].name.match(integer)){
-							taCodeBlock.hexCode[byteIndex] = "A0"; //load memory with a constant
-							byteIndex++;
-							var taInt = curBlockChildren.children[taChild].name;
-							taInt = "0" + taInt;
-							taCodeBlock.hexCode[byteIndex] = taInt;
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "A2";
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "01";
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "FF";
-							byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "A0"; //load memory with a constant
+								byteIndex++;
+								var taInt = curBlockChildren.children[taChild].name;
+								taInt = "0" + taInt;
+								taCodeBlock.hexCode[byteIndex] = taInt;
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "A2";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "01";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "FF";
+								byteIndex++;
 						}else if(curBlockChildren.children[taChild].name.match(string) && curBlockChildren.children[taChild].isString == true){
-							taCodeBlock.hexCode[byteIndex] = "A0";
-							byteIndex++;
-							//mem location of the beginning of the string
-							taCodeBlock.hexCode[byteIndex] = generateString(curBlockChildren.children[taChild].name);
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "A2";
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "02";
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "FF";
-							byteIndex++;	
+								taCodeBlock.hexCode[byteIndex] = "A0";
+								byteIndex++;
+								//mem location of the beginning of the string
+								taCodeBlock.hexCode[byteIndex] = generateString(curBlockChildren.children[taChild].name);
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "A2";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "02";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "FF";
+								byteIndex++;	
 						}else if(curBlockChildren.children[taChild].name.match(boolval) && curBlockChildren.children[taChild].isString == undefined){
 							if(curBlockChildren.children[taChild].name == "true"){
 								taCodeBlock.hexCode[byteIndex] = "A0"; //load memory with a constant
@@ -254,26 +255,29 @@
 							}
 						}else if(curBlockChildren.children[taChild].name == "Add"){ //get variables working first, then do this.
 								 //fall into some recursion, just like we're checking long int
-								//TODO: Once I get variables working, make sure that this function accounts for variables too.
+								 fromPrint = true;
+								 longIntPtr = curBlockChildren.children[taChild];
+								 generateAdd();
+								 fromPrint = false;
 						}else if(curBlockChildren.children[taChild].name.match(/[a-z]/) && curBlockChildren.children[taChild].isString == undefined && !curBlockChildren.children[taChild].name.match(boolval)){
-							taCodeBlock.hexCode[byteIndex] = "AC"; 
-							byteIndex++;
-							var taTempVar = findTempVar();
-							taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "XX";
-							byteIndex++;
-							taCodeBlock.hexCode[byteIndex] = "A2";
-							byteIndex++;
-							if(taTempVar.isString){
-								taCodeBlock.hexCode[byteIndex] = "02";
+								taCodeBlock.hexCode[byteIndex] = "AC"; 
 								byteIndex++;
-							}else{
-								taCodeBlock.hexCode[byteIndex] = "01";
+								var taTempVar = findTempVar();
+								taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
 								byteIndex++;
-							}
-							taCodeBlock.hexCode[byteIndex] = "FF";
-							byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "XX";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "A2";
+								byteIndex++;
+								if(taTempVar.isString){
+									taCodeBlock.hexCode[byteIndex] = "02";
+									byteIndex++;
+								}else{
+									taCodeBlock.hexCode[byteIndex] = "01";
+									byteIndex++;
+								}
+								taCodeBlock.hexCode[byteIndex] = "FF";
+								byteIndex++;
 						}
 					}
 
@@ -328,7 +332,7 @@
 					taCodeBlock.hexCode[byteIndex] = "6D";
 					byteIndex++;
 					tempArrPtr = tempArr.length-1;
-						for(i=0; i < tempArr.length; i++){
+						for(var i=0; i < tempArr.length; i++){
 							if(tempArrPtr != 0){
 								taCodeBlock.hexCode[byteIndex] = tempArr[tempArrPtr];
 								tempArrPtr--;
@@ -352,24 +356,130 @@
 					byteIndex++;
 					taCodeBlock.hexCode[byteIndex] = "XX";
 					byteIndex++;
-					taCodeBlock.hexCode[byteIndex] = "AD";
+					if(!fromPrint){
+						taCodeBlock.hexCode[byteIndex] = "AD";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the most recently created variable: the addResult above.
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "XX";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "8D";
+						byteIndex++;
+						var taTempVar = findTempVar();
+						taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "XX";
+						byteIndex++;
+					}else if(fromPrint){
+						taCodeBlock.hexCode[byteIndex] = "AC";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the most recently created variable: the addResult above.
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "XX";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "A2";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "01";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "FF";
+						byteIndex++;
+					}
+					tempArr = [];   //release the values in the tempArr so I don't accidentally use them in another recursive call.
+					fromPrint = false; //defensive programming; if I don't reach the line that sets this to false after I call it in generatePrint, then it'll definitely execute here.
+				}else if(longIntPtr.children[1].name.match(integer)){   
+					//debugger;
+					taCodeBlock.hexCode[byteIndex] = "A9";
 					byteIndex++;
-					taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the most recently created variable: the addResult above.
-					byteIndex++;
-					taCodeBlock.hexCode[byteIndex] = "XX";
+					var taInt = "0"+longIntPtr.children[0].name;
+					taCodeBlock.hexCode[byteIndex] = taInt;
 					byteIndex++;
 					taCodeBlock.hexCode[byteIndex] = "8D";
 					byteIndex++;
-					var taTempVar = findTempVar();
-					taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
+					taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "add"+taInt, 0, curScope, false); 
+					tempArr.push("T"+tempVarCount);
+					tempVarCount++;
 					byteIndex++;
 					taCodeBlock.hexCode[byteIndex] = "XX";
 					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "A9";
+					byteIndex++;
+					var taInt = "0"+longIntPtr.children[1].name;
+					taCodeBlock.hexCode[byteIndex] = taInt;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "8D";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "add"+taInt, 0, curScope, false); 
+					tempArr.push("T"+tempVarCount);
+					tempVarCount++;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "A9";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "00";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "6D";
+					byteIndex++;
+					tempArrPtr = tempArr.length-1;
+						for(var i=0; i < tempArr.length; i++){
+							if(tempArrPtr != 0){
+								taCodeBlock.hexCode[byteIndex] = tempArr[tempArrPtr];
+								tempArrPtr--;
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "XX";
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "6D";
+								byteIndex++;
+							}else if(tempArrPtr == 0){
+								taCodeBlock.hexCode[byteIndex] = tempArr[tempArrPtr];
+								tempArrPtr--;
+								byteIndex++;
+								taCodeBlock.hexCode[byteIndex] = "XX";
+								byteIndex++;
+							}
+						}
+					taCodeBlock.hexCode[byteIndex] = "8D";
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = createTempVar("T"+tempVarCount, "addResult", 0, curScope, false); 
+					tempVarCount++;
+					byteIndex++;
+					taCodeBlock.hexCode[byteIndex] = "XX";
+					byteIndex++;
+					if(!fromPrint){
+						taCodeBlock.hexCode[byteIndex] = "AD";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the most recently created variable: the addResult above.
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "XX";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "8D";
+						byteIndex++;
+						var taTempVar = findTempVar();
+						taCodeBlock.hexCode[byteIndex] = taTempVar.temp;
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "XX";
+						byteIndex++;
+					}else if(fromPrint){
+						taCodeBlock.hexCode[byteIndex] = "AC";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = taCodeBlock.tempTable.temps[taCodeBlock.tempTable.temps.length-1].temp; //the most recently created variable: the addResult above.
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "XX";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "A2";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "01";
+						byteIndex++;
+						taCodeBlock.hexCode[byteIndex] = "FF";
+						byteIndex++;
+					}
+					tempArr = [];  //release the values in the tempArr so I don't accidentally use them in another recursive call.
+					fromPrint = false; //defensive programming; if I don't reach the line that sets this to false after I call it in generatePrint, then it'll definitely execute here.
 				}
 			}
 		}
 
-			function generateString(str){ //O(n). n based on the length of our string.
+			function generateString(str){ //O(n). n based on the length of the string.
 						var hexLocale = 255; //the beginning of the string in the heap; defaulted to the end of the heap.
 						var hex = "";
 						var stringPtr = heapPtr - str.length;
