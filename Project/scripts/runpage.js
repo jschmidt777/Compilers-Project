@@ -52,18 +52,20 @@
                         
                         //debugger;
                         createCodeBlocks();
-                        curAST = astArr[0];
-                        taCodeBlock = codeArr[0];
-                        curByte = taCodeBlock.hexCode[byteIndex];
-                        codeGen();
                         document.getElementById("taCodeGen").value = "";
-                        if(!isCodeGenError){ 
-                            for(i = 0; i < codeArr.length; i++){
-                            document.getElementById("taCodeGen").value += "Program " +(i+1) +"\n" + codeArr[i].toString() +"\n\n";  
+                            for(var i = 0; i < codeArr.length; i++){
+                                if(!isCodeGenError){ 
+                                    byteIndex = 0;
+                                    tempVarCount = 0;
+                                    jumpCount = 0;
+                                    curAST = astArr[i];
+                                    taCodeBlock = codeArr[i];
+                                    codeGen();
+                                    document.getElementById("taCodeGen").value += "Program " +(i+1) +"\n" + codeArr[i].toString() +"\n\n";  
+                                }else{
+                                    document.getElementById("taCodeGen").value = "Code Block(s) not produced due to a code generation error (see log oriented left).";
+                                }
                             }
-                        }else{
-                            document.getElementById("taCodeGen").value = "Code Block(s) not produced due to a code generation error (see log oriented left).";
-                        }
                        
 
                     }else{

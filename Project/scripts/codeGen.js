@@ -46,9 +46,7 @@
 					var boolval = /(false|true)/;
 					var count = 0;
 					var heapPtr = 255; //initialize to the end of the memory. FF.
-					//curByte = goToNextByte();
-					var fromPrint = false; //Don't use this...
-					var longIntPtr = null; //A very similar use in this function like it does in scypeCheck. 
+					var longIntPtr = null; //A very similar use in this function like it does in scypeCheck. Recursively generate the add with this as the pointer.
 					var curScope = 0;
 					var varToVar = false; //when we assign a variable to another variable, we will change the child that is looked at in findTempVar()
 					var jumpPtr = 0; //tracks which temp jump we're pointing at
@@ -96,9 +94,7 @@
 								}else if(curBlockChildren[count].name == "Print"){
 									var tempPtr = curBlockChildren;
 									curBlockChildren = curBlockChildren[count];
-									fromPrint = true; //Don't need this I think. REMOVE later if that's still true.
 									generatePrint();
-									fromPrint = false;
 									curBlockChildren = tempPtr;
 									count++;
 									checkBlockChildren();
@@ -141,12 +137,12 @@
 										checkBlockChildren(); //We'll have to do something similar for calculating the jump here, and add some code for getting back to the while if the condition is still true.
 										var endJump = byteIndex;
 										var jumpCalc = endJump - beginJump;
-										jumpCalc = jumpCalc * 2;
+										jumpCalc = jumpCalc;
 											if(jumpCalc <= 9){
 												jumpCalc = "0" + jumpCalc;
 											}else{
-												jumpCalc = jumpCalc.toString(16);
-												jumpCalc = jumpCalc.toUpperCase();
+												//jumpCalc = jumpCalc.toString(16);
+												//jumpCalc = jumpCalc.toUpperCase();
 											}
 										taCodeBlock.jumpTable.jumps[jumpPtr].distance = jumpCalc;
 										jumpPtr++;
@@ -196,7 +192,7 @@
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
-									checkBlockChildren();
+									//checkBlockChildren();
 								}else{ 
 
 								}
@@ -206,13 +202,7 @@
 					}
 
 					function generatePrint(){
-						var taChild = 0; 
-						if(fromPrint){
-							taChild = 0; // look at the first child since that's what we'll be printing. else... 
-						}else{
-
-						}
-						//Notes: can print anything, so have to account for strings, ints, bools, and variables
+						var taChild = 0; //No real reason for this, but I'm leaving it in for now.
 						if(curBlockChildren.children[taChild].name.match(integer)){
 							taCodeBlock.hexCode[byteIndex] = "A0"; //load memory with a constant
 							byteIndex++;
@@ -227,7 +217,6 @@
 							taCodeBlock.hexCode[byteIndex] = "FF";
 							byteIndex++;
 						}else if(curBlockChildren.children[taChild].name.match(string) && curBlockChildren.children[taChild].isString == true){
-							//A0 (hex mem location) A2 02 FF
 							taCodeBlock.hexCode[byteIndex] = "A0";
 							byteIndex++;
 							//mem location of the beginning of the string
@@ -288,7 +277,7 @@
 						}
 					}
 
-// A9 02 8D 38 00 A9 04 8D 39 00 A9 05 8D 3A 00 A9 00 6D 36 00 6D 3A 00 6D 39 00 6D 38 00 8D 3B 00 AD 3B 00 8D 37 00 
+
 		function generateAdd(){ 
 			if(longIntPtr.children[0].name.match(integer)){
 				if(longIntPtr.children[1].name == "Add"){ 
@@ -873,6 +862,7 @@
 									byteIndex++;
 									taCodeBlock.hexCode[byteIndex] = "AE"; 
 									byteIndex++;
+									//debugger;
 									var taFirstTempVar = findTempVar();  
 									taCodeBlock.hexCode[byteIndex] = taFirstTempVar.temp;
 									byteIndex++;
@@ -974,7 +964,7 @@
 						var highestScopeVar = possibleTemps[0]; //we will return the var with respect to the current scope; it's static, so we'll be using the variable most immediate in the code.
 						if(possibleTemps.length > 1){
 							for(i = 0; i < possibleTemps.length; i++){ //don't really see a sit. where this won't work... hopefully! 
-								if(possibleTemps[i].scope <= curScope){
+								if(possibleTemps[i].scope <= curScope){  //if the while/if is in another scope, so it JUST has braces around it and isn't nested in another while/if, this may not work 100%
 									highestScopeVar = possibleTemps[i];
 								}
 							}
