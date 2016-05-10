@@ -193,7 +193,7 @@
 									curBlockChildren = tempPtr;
 									count = temp;
 									count++;
-									//checkBlockChildren();
+									checkBlockChildren(); //NEED THIS
 								}else{ 
 
 								}

@@ -374,7 +374,8 @@ function symbTable(){
 				function lookToZeroScope(){ 
 						var zeroScope = curSymbolTable.scopeArr[0];
 						for(i = 0; i < zeroScope.symbols.length; i++){
-							if(fromLongInt || fromString){
+							if(fromLongInt || fromString || fromBool){ //don't think i need the other two || here
+								debugger;
 								if(zeroScope.symbols[i].id == curBlockChildren.children[1].name){
 									zeroScope.symbols[i].linesReferencedOn.push(curBlockChildren.children[1].linenum);
 									if(checkType(zeroScope.symbols[i])){
@@ -452,6 +453,7 @@ function symbTable(){
 											id.isUsed = true;
 										if(fromLongInt){ //this is just defensive in case we got something weird that could change the fromLongInt value.
 											isGoodInt = true;
+											fromLongInt = false;
 											return true;
 										}else{
 											return true;
@@ -494,6 +496,7 @@ function symbTable(){
 									putMessage("Error on line: "+ curBlockChildren.children[1].linenum + ", Type mismatch. LHS of type string does not match RHS type.");
 									return false;
 								}else{
+									fromString = false;
 									return true;
 								}
 							}else{
@@ -516,6 +519,7 @@ function symbTable(){
 									return  false;
 								}
 							}else{
+								fromBool = false;
 								return true;
 							}
 						}
